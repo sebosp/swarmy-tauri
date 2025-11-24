@@ -7,3 +7,7 @@ ignore = ["./src-tauri"]
 [serve]
 port = 1420
 open = false
+
+[tools]
+# tailwindcss = "2.7.0"
+tailwindcss-extra = "2.7.0"

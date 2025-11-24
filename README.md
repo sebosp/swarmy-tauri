@@ -1,7 +1,19 @@
-# Tauri + Leptos
+# Swarmy tauri/leptos frontend
 
-This template should help get you started developing with Tauri and Leptos.
+# Development
 
-## Recommended IDE Setup
+## Dependencies
+Tauri requirement plus tailwindcss and daisyui
+```
+cd ~/swarmy-tauri;
+npm install daisyui
+```
 
-[VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+There's a bit of a strange bug when installing tailwindcss / tailwindcss-extra in Trunk.toml, for some reason installing one tries to
+I think I had to use something like
+```toml
+[tool]
+tailwindcss = "2.7.0" # This is actually tailwindcss-extra version
+```
+Then `trunk build` downloads the tailwindcss-extra plugin version 2.7.0 :shrug:
+And then **sometimes** it works?

@@ -1,6 +1,13 @@
+use leptos::ev::SubmitEvent;
+use leptos::leptos_dom::logging::console_log;
+use leptos::prelude::*;
 use leptos::task::spawn_local;
-use leptos::{ev::SubmitEvent, prelude::*};
+use reactive_graph::traits::Get as _;
+use reactive_graph::traits::{Read, Write};
+use reactive_stores::{Patch, Store};
+use s2protocol::cli::SC2ReplaysDirStats;
 use serde::{Deserialize, Serialize};
+use swarmy_tauri_ui::*;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -16,52 +23,132 @@ struct ReplaysDirectory<'a> {
 
 #[component]
 pub fn App() -> impl IntoView {
-    let (replay_path_r, replay_path_w) = signal(String::new());
-    let (check_replay_path_r, check_replay_path_w) = signal(String::new());
+    let (set_replay_path_r, set_replay_path_w) = signal(String::new());
+    let (scan_button_enabled, set_scan_button_enabled) = signal(true);
+    let fake_data = SC2ReplaysDirStats {
+        total_files: 30,
+        total_supported_replays: 20,
+        abily_supported_replays: 10,
+        top_10_players: vec![
+            (String::from("Player1"), 10),
+            (String::from("Player2"), 8),
+            (String::from("Player3"), 7),
+            (String::from("Player4"), 3),
+            (String::from("Player5"), 2),
+        ],
+    };
+    let fake_data_table: SC2ReplaysDirStatsTable = fake_data.into();
+    let data = Store::new(fake_data_table);
 
-    let update_name = move |ev| {
+    let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
-        replay_path_w.set(v);
+        set_replay_path_w.set(v);
     };
 
     let set_replays_path = move |ev: SubmitEvent| {
         ev.prevent_default();
-        spawn_local(async move {
-            let name = replay_path_r.get_untracked();
-            if name.is_empty() {
-                return;
-            }
+        let name = set_replay_path_r.get_untracked();
+        if name.is_empty() {
+            console_log("Replay path is empty.");
+            return;
+        }
+        set_scan_button_enabled.set(false);
 
+        spawn_local(async move {
             let args = serde_wasm_bindgen::to_value(&ReplaysDirectory { path: &name }).unwrap();
             // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-            let new_msg = invoke("greet", args).await.as_string().unwrap();
-            check_replay_path_w.set(new_msg);
+            match serde_wasm_bindgen::from_value::<SC2ReplaysDirStats>(
+                invoke("set_replays_path", args).await,
+            ) {
+                Ok(stats) => {
+                    console_log(&format!("Replays Directory Stats: {:?}", stats));
+                    set_scan_button_enabled.set(true);
+                    let mut stats_table: SC2ReplaysDirStatsTable = stats.into();
+                    console_log(&format!("New data = {:?}", stats_table));
+                    data.top_10_players().write().retain(|_| false);
+                    data.top_10_players()
+                        .write()
+                        .append(&mut stats_table.top_10_players);
+                    data.total_files().patch(stats_table.total_files);
+                    data.total_supported_replays()
+                        .patch(stats_table.total_supported_replays);
+                    data.abily_supported_replays()
+                        .patch(stats_table.abily_supported_replays);
+                }
+                Err(e) => {
+                    console_log(&format!("Error invoking set_replays_path: {:?}", e));
+                    set_scan_button_enabled.set(true);
+                    return;
+                }
+            }
         });
     };
 
     view! {
-        <main class="container">
-            <h1>"Welcome to Tauri + Leptos"</h1>
-
-            <div class="row">
-                <a href="https://tauri.app" target="_blank">
-                    <img src="public/tauri.svg" class="logo tauri" alt="Tauri logo"/>
-                </a>
-                <a href="https://docs.rs/leptos/" target="_blank">
-                    <img src="public/leptos.svg" class="logo leptos" alt="Leptos logo"/>
-                </a>
+        <div class="grid grid-cols-4 gap-4 bg-base-200">
+            <div class="col-span-1 m-0">
+                <p class="text-accent m-0">"Swarmy"</p>
             </div>
-            <p>"Click on the Tauri and Leptos logos to learn more."</p>
-
-            <form class="row" on:submit=set_replays_path>
+            <div class="col-span-3">
+            <form
+                class="m-0"
+                on:submit=set_replays_path>
                 <input
-                    id="greet-input"
-                    placeholder="Enter the directory name..."
-                    on:input=update_name
+                    class="input input-sm my-0 mx-0"
+                    id="scan-directory-input"
+                    on:input=tx_update_replay_dir
                 />
-                <button type="submit">"Set Replays Path"</button>
+                <button
+                    class="btn btn-primary btn-sm m-0"
+                    type="submit">
+                     {
+                        move || if !scan_button_enabled.get() {
+                            "Scanning..."
+                        } else {
+                            "Scan Replays Path"
+                        }
+                    }
+                </button>
+                <p
+                    style:display= {move || if scan_button_enabled.get() { "none" } else { "block" } }
+                >"Scanning..."</p>
             </form>
-            <p>{ move || check_replay_path_r.get() }</p>
-        </main>
+            </div>
+            <div class="col-span-3 center">
+                <h3 class="text-neutral-content">"Total Replays: " {move || data.total_files().get()}</h3>
+                <h3 class="text-info">"Total Supported Replays: " {move || data.total_supported_replays().get()}</h3>
+                <h3 class="text-success">"Ability Supported Replays: " {move || data.abily_supported_replays().get()}</h3>
+                <h3>"Top 10 players:"</h3>
+                <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
+                    <table class="table table-sm table-zebra">
+                        <thead>
+                        <tr>
+                            <th></th>
+                            <th>Name</th>
+                            <th>Total Games</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <For
+                                each=move || data.top_10_players()
+                                key=|row| row.read().name.clone()
+                                children=|child| {
+                                    let idx = child.clone().idx();
+                                    let name = child.clone().name().clone();
+                                    let count = child.clone().count();
+                                    view! {
+                                        <tr>
+                                            <th>{move || idx.get()}</th>
+                                            <td>{move || name.get()}</td>
+                                            <td>{move || count.get()}</td>
+                                        </tr>
+                                    }
+                                }
+                            />
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     }
 }
