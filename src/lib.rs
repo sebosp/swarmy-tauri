@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct SC2ReplaysDirStatsTable {
     pub total_files: usize,
     pub total_supported_replays: usize,
-    pub abily_supported_replays: usize,
+    pub ability_supported_replays: usize,
     #[store(key: String = |row| row.name.clone())]
     pub top_10_players: Vec<SC2ReplaysDirPlayerEntry>,
 }
@@ -14,6 +14,7 @@ pub struct SC2ReplaysDirStatsTable {
 #[derive(Store, Debug, Clone, Serialize, Deserialize)]
 pub struct SC2ReplaysDirPlayerEntry {
     pub idx: usize,
+    pub clan: String,
     pub name: String,
     pub count: usize,
 }
@@ -23,15 +24,24 @@ impl From<SC2ReplaysDirStats> for SC2ReplaysDirStatsTable {
         Self {
             total_files: stats.total_files,
             total_supported_replays: stats.total_supported_replays,
-            abily_supported_replays: stats.abily_supported_replays,
+            ability_supported_replays: stats.ability_supported_replays,
             top_10_players: stats
                 .top_10_players
                 .into_iter()
                 .enumerate()
-                .map(|(idx, (name, count))| SC2ReplaysDirPlayerEntry {
-                    idx: idx + 1,
-                    name: name,
-                    count: count,
+                .map(|(idx, (name, count))| {
+                    let (clan, name) = if let Some((clan, name)) = name.split_once("<sp/>") {
+                        let clan = clan.replace("&gt;", "").replace("&lt;", "");
+                        (clan.to_string(), name.to_string())
+                    } else {
+                        (String::new(), name)
+                    };
+                    SC2ReplaysDirPlayerEntry {
+                        idx: idx + 1,
+                        clan,
+                        name,
+                        count,
+                    }
                 })
                 .collect(),
         }

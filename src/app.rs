@@ -2,7 +2,6 @@ use leptos::ev::SubmitEvent;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use reactive_graph::traits::Get as _;
 use reactive_graph::traits::{Read, Write};
 use reactive_stores::{Patch, Store};
 use s2protocol::cli::SC2ReplaysDirStats;
@@ -28,7 +27,8 @@ pub fn App() -> impl IntoView {
     let fake_data = SC2ReplaysDirStats {
         total_files: 30,
         total_supported_replays: 20,
-        abily_supported_replays: 10,
+        ability_supported_replays: 10,
+        top_10_maps: vec![],
         top_10_players: vec![
             (String::from("Player1"), 10),
             (String::from("Player2"), 8),
@@ -72,8 +72,8 @@ pub fn App() -> impl IntoView {
                     data.total_files().patch(stats_table.total_files);
                     data.total_supported_replays()
                         .patch(stats_table.total_supported_replays);
-                    data.abily_supported_replays()
-                        .patch(stats_table.abily_supported_replays);
+                    data.ability_supported_replays()
+                        .patch(stats_table.ability_supported_replays);
                 }
                 Err(e) => {
                     console_log(&format!("Error invoking set_replays_path: {:?}", e));
@@ -85,70 +85,87 @@ pub fn App() -> impl IntoView {
     };
 
     view! {
-        <div class="grid grid-cols-4 gap-4 bg-base-200">
-            <div class="col-span-1 m-0">
-                <p class="text-accent m-0">"Swarmy"</p>
+        <div class="grid grid-cols-3 bg-base-800">
+            <div class="col-span-3">
+                <form
+                    class="m-0"
+                    on:submit=set_replays_path>
+                    <input
+                        class="input input-sm my-0 mx-0"
+                        id="scan-directory-input"
+                        on:input=tx_update_replay_dir
+                    />
+                    <button
+                        class="btn btn-primary btn-sm m-0"
+                        type="submit">
+                        {
+                            move || if !scan_button_enabled.get() {
+                                "Scanning..."
+                            } else {
+                                "Scan Replays Path"
+                            }
+                        }
+                    </button>
+                    <p
+                        style:display= {move || if scan_button_enabled.get() { "none" } else { "block" } }
+                    >"Scanning..."</p>
+                </form>
+            </div>
+            <div class="col-span-1">
+                <h3 class="text-neutral-content">
+                    "Total Replays: "
+                    <div class="badge badge-sm badge-ghost">{move || data.total_files().get()}</div>
+                </h3>
+            </div>
+            <div class="col-span-1">
+                <h3 class="text-info">
+                    "Supported Replays: "
+                    <div class="badge badge-sm badge-info">{move || data.total_supported_replays().get()}</div>
+                </h3>
+            </div>
+            <div class="col-span-1">
+                <h3 class="text-success">
+                    "Ability Replays: "
+                    <div class="badge badge-sm badge-success">{move || data.ability_supported_replays().get()}</div>
+                </h3>
             </div>
             <div class="col-span-3">
-            <form
-                class="m-0"
-                on:submit=set_replays_path>
-                <input
-                    class="input input-sm my-0 mx-0"
-                    id="scan-directory-input"
-                    on:input=tx_update_replay_dir
-                />
-                <button
-                    class="btn btn-primary btn-sm m-0"
-                    type="submit">
-                     {
-                        move || if !scan_button_enabled.get() {
-                            "Scanning..."
-                        } else {
-                            "Scan Replays Path"
-                        }
-                    }
-                </button>
-                <p
-                    style:display= {move || if scan_button_enabled.get() { "none" } else { "block" } }
-                >"Scanning..."</p>
-            </form>
+                <h2 class="text-neutral-content">"Top 10 Players"</h2>
             </div>
-            <div class="col-span-3 center">
-                <h3 class="text-neutral-content">"Total Replays: " {move || data.total_files().get()}</h3>
-                <h3 class="text-info">"Total Supported Replays: " {move || data.total_supported_replays().get()}</h3>
-                <h3 class="text-success">"Ability Supported Replays: " {move || data.abily_supported_replays().get()}</h3>
-                <h3>"Top 10 players:"</h3>
-                <div class="overflow-x-auto rounded-box border border-base-content/5 bg-base-100">
-                    <table class="table table-sm table-zebra">
-                        <thead>
-                        <tr>
-                            <th></th>
-                            <th>Name</th>
-                            <th>Total Games</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            <For
-                                each=move || data.top_10_players()
-                                key=|row| row.read().name.clone()
-                                children=|child| {
-                                    let idx = child.clone().idx();
-                                    let name = child.clone().name().clone();
-                                    let count = child.clone().count();
-                                    view! {
-                                        <tr>
-                                            <th>{move || idx.get()}</th>
-                                            <td>{move || name.get()}</td>
-                                            <td>{move || count.get()}</td>
-                                        </tr>
-                                    }
+            <div class="col-span-3 rounded-box bg-base-100 border border-base-300">
+                <table class="table table-sm table-zebra">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>Clan</th>
+                        <th>Name</th>
+                        <th>Total Games</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <For
+                            each=move || data.top_10_players()
+                            key=|row| row.read().name.clone()
+                            children=|child| {
+                                let idx = child.clone().idx();
+                                let clan = child.clone().clan().clone();
+                                let name = child.clone().name().clone();
+                                let count = child.clone().count();
+                                view! {
+                                    <tr>
+                                        <th>{move || idx.get()}</th>
+                                        <td>{move || clan.get()}</td>
+                                        <td>{move || name.get()}</td>
+                                        <td>{move || count.get()}</td>
+                                    </tr>
                                 }
-                            />
-                        </tbody>
-                    </table>
-                </div>
+                            }
+                        />
+                    </tbody>
+                </table>
             </div>
         </div>
+
+
     }
 }
