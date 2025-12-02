@@ -1,3 +1,4 @@
+use leptos::leptos_dom::logging;
 use reactive_stores::Store;
 use s2protocol::cli::SC2ReplaysDirStats;
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,8 @@ pub struct SC2ReplaysDirStatsTable {
     pub ability_supported_replays: usize,
     #[store(key: String = |row| row.name.clone())]
     pub top_10_players: Vec<SC2ReplaysDirPlayerEntry>,
+    #[store(key: String = |row| row.title.clone())]
+    pub top_10_maps: Vec<SC2ReplaysDirMapEntry>,
 }
 
 #[derive(Store, Debug, Clone, Serialize, Deserialize)]
@@ -19,8 +22,19 @@ pub struct SC2ReplaysDirPlayerEntry {
     pub count: usize,
 }
 
+#[derive(Store, Debug, Clone, Serialize, Deserialize)]
+pub struct SC2ReplaysDirMapEntry {
+    pub idx: usize,
+    pub title: String,
+    pub count: usize,
+}
+
 impl From<SC2ReplaysDirStats> for SC2ReplaysDirStatsTable {
     fn from(stats: SC2ReplaysDirStats) -> Self {
+        logging::console_log(&format!(
+            "Converting SC2ReplaysDirStats to SC2ReplaysDirStatsTable: {:?}",
+            stats,
+        ));
         Self {
             total_files: stats.total_files,
             total_supported_replays: stats.total_supported_replays,
@@ -44,18 +58,16 @@ impl From<SC2ReplaysDirStats> for SC2ReplaysDirStatsTable {
                     }
                 })
                 .collect(),
+            top_10_maps: stats
+                .top_10_maps
+                .into_iter()
+                .enumerate()
+                .map(|(idx, (title, count))| SC2ReplaysDirMapEntry {
+                    idx: idx + 1,
+                    title,
+                    count,
+                })
+                .collect(),
         }
     }
-}
-
-#[derive(Store, Debug, Clone)]
-pub struct Data {
-    #[store(key: String = |row| row.key.clone())]
-    pub rows: Vec<DatabaseEntry>,
-}
-
-#[derive(Store, Debug, Clone)]
-pub struct DatabaseEntry {
-    pub key: String,
-    pub value: i32,
 }

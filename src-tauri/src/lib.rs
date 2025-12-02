@@ -6,15 +6,22 @@ async fn set_replays_path(path: String) -> Result<SC2ReplaysDirStats, String> {
     // create a thread to scan the directory in the background:
     let t = std::thread::spawn(move || {
         log::info!("Scanning replays directory: {}", path);
-    match SC2ReplaysDirStats::from_directory(&path) {
-        Ok(s) => Ok(s),
-        Err(e) => {
-            log::error!("Error scanning replays directory: {}", e);
-            Err(format!("Error scanning replays directory: {:?}", e))
+        match SC2ReplaysDirStats::from_directory(&path) {
+            Ok(s) => {
+                log::info!(
+                    "Finished scanning replays directory: {} with res: {:?}",
+                    path,
+                    s
+                );
+                Ok(s)
+            }
+            Err(e) => {
+                log::error!("Error scanning replays directory: {}", e);
+                Err(format!("Error scanning replays directory: {:?}", e))
+            }
         }
-    }
-});
-t.join().unwrap()
+    });
+    t.join().unwrap()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
