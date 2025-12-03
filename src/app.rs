@@ -1,4 +1,4 @@
-use leptos::ev::SubmitEvent;
+use leptos::ev::MouseEvent;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
@@ -22,8 +22,9 @@ struct ReplaysDirectory<'a> {
 
 #[component]
 pub fn App() -> impl IntoView {
-    let (set_replay_path_r, set_replay_path_w) = signal(String::new());
-    let (scan_button_enabled, set_scan_button_enabled) = signal(true);
+    let (replay_path, set_replay_path) = signal(String::new());
+    let (scan_button_enabled, set_scan_button_enabled) = signal(false);
+    let (enable_parallel_processing, set_enable_parallel_processing) = signal(true);
     let fake_data = SC2ReplaysDirStats {
         total_files: 30,
         total_supported_replays: 20,
@@ -42,12 +43,12 @@ pub fn App() -> impl IntoView {
 
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
-        set_replay_path_w.set(v);
+        set_replay_path.set(v);
     };
 
-    let set_replays_path = move |ev: SubmitEvent| {
+    let set_replays_path = move |ev: MouseEvent| {
         ev.prevent_default();
-        let name = set_replay_path_r.get_untracked();
+        let name = replay_path.get_untracked();
         if name.is_empty() {
             console_log("Replay path is empty.");
             return;
@@ -89,31 +90,55 @@ pub fn App() -> impl IntoView {
     };
 
     view! {
-        <div class="flex">
-            <div class="basis-128">
-                <form
-                    class="m-0"
-                    on:submit=set_replays_path>
-                    <input
-                        class="input input-sm my-0 mx-0"
-                        id="scan-directory-input"
-                        on:input=tx_update_replay_dir
-                    />
-                    <button
-                        class="btn btn-primary btn-sm m-0"
-                        type="submit">
-                        {
-                            move || if !scan_button_enabled.get() {
-                                "Scanning..."
-                            } else {
-                                "Scan Replays Path"
-                            }
+        <div class="grid grid-cols-8 grid-rows-1 gap-1">
+            <div class="col-span-1">
+                <p class="flex text-neutral-content justify-end my-0 mx-0">"Path:"</p>
+            </div>
+            <div class="col-span-5">
+                <input
+                    class="input input-sm my-0 mx-0"
+                    id="scan-directory-input"
+                    on:input=tx_update_replay_dir
+                />
+                <button
+                    class={move || if replay_path.get().len() > 0 { "btn btn-primary btn-sm m-0" } else { "btn btn-disabled btn-sm m-0" }}
+                    on:click=set_replays_path
+                    disabled= {move || !scan_button_enabled.get() }
+                    title="Initial scanfor StarCraft II replays">
+                    {
+                        move || if replay_path.get().len() > 0 && !scan_button_enabled.get() {
+                            "Scanning..."
+                        } else {
+                            "Scan"
                         }
-                    </button>
-                    <p
-                        style:display= {move || if scan_button_enabled.get() { "none" } else { "block" } }
-                    >"Scanning..."</p>
-                </form>
+                    }
+                </button>
+                <button
+                    class={move || if replay_path.get().len() > 0 { "btn btn-success btn-sm m-0" } else { "btn btn-disabled btn-sm m-0" }}
+                    on:click=set_replays_path
+                    disabled= {move || !scan_button_enabled.get() }
+                    title="Optimize the replay generating Arrow files (may take some time)">
+                    {
+                        move || if replay_path.get().len() > 0 && !scan_button_enabled.get() {
+                            "Optimizing..."
+                        } else {
+                            "Optimize"
+                        }
+                    }
+                </button>
+                <p
+                    style:display= {move || if scan_button_enabled.get() { "none" } else { "block" } }
+                >"Scanning..."</p>
+            </div>
+            <div class="col-span-2 flex justify-end">
+                <label class="label cursor-pointer" title="Enable parallel processing will use more CPU and memory">
+                    <input type="checkbox" class="checkbox checkbox-sm"
+                        checked=enable_parallel_processing.get()
+                        on:click=move |_| set_enable_parallel_processing.set(!enable_parallel_processing.get()) />
+                    <span class="label-text ml-2">
+                        <p class="fa fa-cogs"></p>
+                    </span>
+                </label>
             </div>
         </div>
         <div class="flex flex-row">
