@@ -49,7 +49,7 @@ pub fn ScanDirectory() -> impl IntoView {
             .unwrap();
             // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
             match serde_wasm_bindgen::from_value::<SC2ReplaysDirStats>(
-                invoke("set_replays_path", args).await,
+                invoke("basic_scan_replay_path", args).await,
             ) {
                 Ok(stats) => {
                     set_scan_button_enabled.set(true);
@@ -70,7 +70,7 @@ pub fn ScanDirectory() -> impl IntoView {
                         .patch(stats_table.ability_supported_replays);
                 }
                 Err(e) => {
-                    console_log(&format!("Error invoking set_replays_path: {:?}", e));
+                    console_log(&format!("Error invoking basic_scan_replay_path: {:?}", e));
                     set_scan_button_enabled.set(true);
                     return;
                 }
@@ -129,7 +129,7 @@ pub fn ScanDirectory() -> impl IntoView {
                         } else {
                             "btn btn-soft my-0 mx-0"
                         }
-                        checked=enable_serial_processing.get()
+                        checked=move || enable_serial_processing.get()
                         on:click=move |_| set_enable_serial_processing.set(!enable_serial_processing.get()) />
                         <span
                         title=move || if enable_serial_processing.get() {
