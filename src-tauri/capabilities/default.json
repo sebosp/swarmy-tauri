@@ -10,6 +10,7 @@
     "opener:default",
     "dialog:default",
     "log:default",
-    "fs:default"
+    "fs:default",
+    "store:default"
   ]
 }
