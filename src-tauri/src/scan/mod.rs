@@ -1,16 +1,45 @@
 //! Swarmy Tauri UI - SC2Replay Directory Scan and Export to Arrow IPC Module
 
+use crate::error::SwarmyTauriError;
+use crate::settings::AppSettings;
 use s2protocol::arrow_store::ArrowIpcTypes;
 use s2protocol::cli::WriteArrowIpcProps;
 use s2protocol::game_events::read_balance_data_from_json_dir;
 use s2protocol::SC2ReplaysDirStats;
 use std::path::PathBuf;
+use tauri_plugin_store::StoreBuilder;
+
+#[tauri::command]
+pub fn get_current_app_config(
+    app_handle: tauri::AppHandle,
+) -> Result<AppSettings, SwarmyTauriError> {
+    let store = StoreBuilder::new(&app_handle, "settings.json").build()?;
+
+    // If there are no saved settings yet, this will return an error so we ignore the return value.
+    let _ = store.reload();
+
+    let app_settings = AppSettings::load_from_store(&store)?;
+    Ok(app_settings)
+}
 
 #[tauri::command]
 pub async fn basic_scan_replay_path(
+    app_handle: tauri::AppHandle,
     path: String,
     serial: bool,
 ) -> Result<SC2ReplaysDirStats, String> {
+    let store = StoreBuilder::new(&app_handle, "settings.json")
+        .build()
+        .map_err(|e| {
+            log::error!("Error building store: {}", e);
+            format!("Error building store: {:?}", e)
+        })?;
+
+    // If there are no saved settings yet, this will return an error so we ignore the return value.
+    let _ = store.reload();
+
+    store.set("disable_parallel_scans", serial);
+    store.set("replay_paths", vec![path.clone()]);
     // create a thread to scan the directory in the background:
     let t = std::thread::spawn(move || {
         log::info!("Scanning replays directory: {}", path);

@@ -11,12 +11,12 @@ impl AppSettings {
         store: &Store<R>,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let disable_parallel_scans = store
-            .get("appSettings.disableParallelScans")
+            .get("disable_parallel_scans")
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
 
         let replay_paths = store
-            .get("appSettings.replayPaths")
+            .get("replay_paths")
             .map(|v| {
                 v.to_string()
                     .split(',')
