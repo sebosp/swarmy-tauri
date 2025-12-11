@@ -4,8 +4,6 @@ pub mod scan;
 pub use scan::*;
 pub mod settings;
 pub use settings::*;
-pub mod error;
-pub use error::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -20,6 +18,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            get_current_app_config,
             basic_scan_replay_path,
             optimize_replay_path
         ])

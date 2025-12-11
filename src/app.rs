@@ -8,6 +8,7 @@ use phosphor_leptos::{Icon, IconWeight, CPU};
 use reactive_graph::traits::Write;
 use reactive_stores::{Patch, Store};
 use s2protocol::SC2ReplaysDirStats;
+use swarmy_tauri_common::*;
 use swarmy_tauri_ui::*;
 
 #[component]
@@ -16,6 +17,32 @@ pub fn ScanDirectory() -> impl IntoView {
     let (scan_button_enabled, set_scan_button_enabled) = signal(false);
     let (enable_serial_processing, set_enable_serial_processing) = signal(false);
 
+    spawn_local(async move {
+        let args = serde_wasm_bindgen::to_value(&ReplaysDirectory {
+            path: replay_path.get_untracked().as_str(),
+            serial: enable_serial_processing.get_untracked(),
+        })
+        .unwrap();
+        // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+        match serde_wasm_bindgen::from_value::<AppSettings>(
+            invoke("get_current_app_config", args).await,
+        ) {
+            Ok(config) => {
+                console_log(&format!("Loaded app config: {:?}", config));
+                set_enable_serial_processing.set(config.disable_parallel_scans);
+                if let Some(path) = config.replay_paths.first() {
+                    console_log(&format!("Loading path: {:?}", path));
+                    set_replay_path.set(path.clone());
+                    set_scan_button_enabled.set(true);
+                }
+            }
+            Err(e) => {
+                console_log(&format!("Error invoking basic_scan_replay_path: {:?}", e));
+                set_scan_button_enabled.set(true);
+                return;
+            }
+        }
+    });
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
         set_scan_button_enabled.set(v.len() > 0);
@@ -86,6 +113,7 @@ pub fn ScanDirectory() -> impl IntoView {
                     <input
                         class="input input-sm my-0 mx-0"
                         id="scan-directory-input"
+                        value=move || replay_path.get()
                         on:input=tx_update_replay_dir
                         type="text"
                     />

@@ -17,9 +17,13 @@ s2protocol = { git = "https://www.github.com/sebosp/s2protocol-rs", branch="init
 reactive_stores = "0.3"
 reactive_graph = "0.2"
 phosphor-leptos = "0.8.0"
+swarmy-tauri-common = {path = "swarmy-tauri-common" }
 
 [workspace]
-members = ["src-tauri"]
+members = [
+    "src-tauri",
+    "swarmy-tauri-common"
+]
 
 
 [profile.dev]

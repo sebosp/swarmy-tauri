@@ -28,5 +28,5 @@ tauri-plugin-log = "2"
 log = "0.4"
 tauri-plugin-fs = "2"
 tauri-plugin-persisted-scope = "2"
-tauri-plugin-store = "2"
-thiserror = "2.0.17"
+tauri-plugin-store = "2.4.1"
+swarmy-tauri-common = {path = "../swarmy-tauri-common" }

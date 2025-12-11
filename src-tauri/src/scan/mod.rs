@@ -1,24 +1,31 @@
 //! Swarmy Tauri UI - SC2Replay Directory Scan and Export to Arrow IPC Module
 
-use crate::error::SwarmyTauriError;
-use crate::settings::AppSettings;
 use s2protocol::arrow_store::ArrowIpcTypes;
 use s2protocol::cli::WriteArrowIpcProps;
 use s2protocol::game_events::read_balance_data_from_json_dir;
 use s2protocol::SC2ReplaysDirStats;
 use std::path::PathBuf;
+use swarmy_tauri_common::*;
 use tauri_plugin_store::StoreBuilder;
 
+use crate::settings::load_app_settings_from_store;
+
 #[tauri::command]
-pub fn get_current_app_config(
-    app_handle: tauri::AppHandle,
-) -> Result<AppSettings, SwarmyTauriError> {
-    let store = StoreBuilder::new(&app_handle, "settings.json").build()?;
+pub fn get_current_app_config(app_handle: tauri::AppHandle) -> Result<AppSettings, String> {
+    let store = StoreBuilder::new(&app_handle, "settings.json")
+        .build()
+        .map_err(|e| {
+            log::error!("Error building store: {}", e);
+            format!("Error building store: {:?}", e)
+        })?;
 
     // If there are no saved settings yet, this will return an error so we ignore the return value.
     let _ = store.reload();
 
-    let app_settings = AppSettings::load_from_store(&store)?;
+    let app_settings = load_app_settings_from_store(&store).map_err(|e| {
+        log::error!("Error loading app settings: {}", e);
+        format!("Error loading app settings: {:?}", e)
+    })?;
     Ok(app_settings)
 }
 
