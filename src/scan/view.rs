@@ -153,7 +153,7 @@ pub fn ScanDirectory() -> impl IntoView {
             <div class="col-span-1 flex justify-end">
                 <label class="label cursor-pointer" title="Disable Parallel Processing (less CPU usage)">
                     <input type="checkbox"
-                        prop:class=move || if disable_parallel_scans.get() {
+                        class=move || if disable_parallel_scans.get() {
                             "btn btn-soft my-0 mx-0 btn-active"
                         } else {
                             "btn btn-soft my-0 mx-0"
@@ -166,7 +166,7 @@ pub fn ScanDirectory() -> impl IntoView {
                         } else {
                             "Parallel Processing Enabled"
                         }
-                        prop:class=move || if disable_parallel_scans.get() {
+                        class=move || if disable_parallel_scans.get() {
                             "label-text text-success mx-1"
                         } else {
                             "label-text text-warning-content mx-1"
