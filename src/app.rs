@@ -35,7 +35,7 @@ pub fn Main() -> impl IntoView {
         </div>
       </div>
       <div class="flex-grow p-2 overflow-auto">
-        <Show when=move || active_page.get() == "scan">
+        <Show when=move || active_page.get() == "Scan">
             <ScanDirectory />
         </Show>
       </div>

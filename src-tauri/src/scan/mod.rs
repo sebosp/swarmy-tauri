@@ -29,11 +29,11 @@ pub fn get_current_app_config(app_handle: tauri::AppHandle) -> Result<AppSetting
     Ok(app_settings)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 pub async fn basic_scan_replay_path(
     app_handle: tauri::AppHandle,
-    path: String,
-    serial: bool,
+    replay_path: String,
+    disable_parallel_scans: bool,
 ) -> Result<SC2ReplaysDirStats, String> {
     let store = StoreBuilder::new(&app_handle, "settings.json")
         .build()
@@ -45,16 +45,16 @@ pub async fn basic_scan_replay_path(
     // If there are no saved settings yet, this will return an error so we ignore the return value.
     let _ = store.reload();
 
-    store.set("disable_parallel_scans", serial);
-    store.set("replay_paths", vec![path.clone()]);
+    store.set("disable_parallel_scans", disable_parallel_scans);
+    store.set("replay_path", replay_path.clone());
     // create a thread to scan the directory in the background:
     let t = std::thread::spawn(move || {
-        log::info!("Scanning replays directory: {}", path);
-        match SC2ReplaysDirStats::from_directory(&path, serial) {
+        log::info!("Scanning replays directory: {}", replay_path);
+        match SC2ReplaysDirStats::from_directory(&replay_path, disable_parallel_scans) {
             Ok(s) => {
                 log::info!(
                     "Finished scanning replays directory: {} with res: {:?}",
-                    path,
+                    replay_path,
                     s
                 );
                 Ok(s)
@@ -68,11 +68,15 @@ pub async fn basic_scan_replay_path(
     t.join().unwrap()
 }
 
-#[tauri::command]
-pub async fn optimize_replay_path(path: String, serial: bool) -> Result<(), String> {
+#[tauri::command(rename_all = "snake_case")]
+pub async fn optimize_replay_path(
+    app_handle: tauri::AppHandle,
+    replay_path: String,
+    disable_parallel_scans: bool,
+) -> Result<(), String> {
     // create a thread to scan the directory in the background:
     let t = std::thread::spawn(move || {
-        let path = PathBuf::from(&path);
+        let path = PathBuf::from(&replay_path);
         let destination = path.join("ipcs");
         log::info!(
             "Optimizing replays directory: {} and storing into {}",
@@ -96,7 +100,7 @@ pub async fn optimize_replay_path(path: String, serial: bool) -> Result<(), Stri
             destination,
             &props,
             &versioned_abilities,
-            serial,
+            disable_parallel_scans,
         ) {
             Ok(s) => {
                 log::info!("Finished optimizing replays directory.",);

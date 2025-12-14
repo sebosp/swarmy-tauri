@@ -10,21 +10,19 @@ pub fn load_app_settings_from_store<R: tauri::Runtime>(
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
 
-    let replay_paths = store
-        .get("replay_paths")
-        .map(|v| {
-            v.as_array()
-                .map(|arr| {
-                    arr.iter()
-                        .filter_map(|item| item.as_str().map(|s| s.to_string()))
-                        .collect()
-                })
-                .unwrap_or_else(Vec::new)
-        })
-        .unwrap_or_else(Vec::new);
+    let replay_path = store
+        .get("replay_path")
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default();
+
+    let has_arrow_ipc_export = store
+        .get("has_arrow_ipc_export")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
 
     Ok(AppSettings {
         disable_parallel_scans,
-        replay_paths,
+        replay_path,
+        has_arrow_ipc_export,
     })
 }

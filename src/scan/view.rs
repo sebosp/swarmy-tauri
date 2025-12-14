@@ -12,99 +12,129 @@ use reactive_stores::{Patch, Store};
 use s2protocol::SC2ReplaysDirStats;
 use swarmy_tauri_common::*;
 
-#[component]
-pub fn ScanDirectory() -> impl IntoView {
-    let (replay_path, set_replay_path) = signal(String::new());
-    let (scan_button_enabled, set_scan_button_enabled) = signal(false);
-    let (disable_parallel_scans, set_disable_parallel_scans) = signal(false);
+pub fn trigger_optimize_replay_path(
+    ev: MouseEvent,
+    replay_path: ReadSignal<String>,
+    disable_parallel_scans: ReadSignal<bool>,
+    set_optimize_button_enabled: WriteSignal<bool>,
+) {
+    ev.prevent_default();
+    let name = replay_path.get_untracked();
+    let disable_parallel = disable_parallel_scans.get_untracked();
+    if name.is_empty() {
+        console_log("Replay path is empty.");
+        return;
+    }
+    set_optimize_button_enabled.set(false);
 
     spawn_local(async move {
         let args = serde_wasm_bindgen::to_value(&AppSettings {
-            disable_parallel_scans: disable_parallel_scans.get_untracked(),
-            replay_paths: vec![replay_path.get_untracked()],
+            disable_parallel_scans: disable_parallel,
+            replay_path: name,
+            has_arrow_ipc_export: false,
         })
         .unwrap();
         // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-        match serde_wasm_bindgen::from_value::<AppSettings>(
-            invoke("get_current_app_config", args).await,
-        ) {
-            Ok(config) => {
-                console_log(&format!("Loaded app config: {:?}", config));
-                set_disable_parallel_scans.set(config.disable_parallel_scans);
-                if let Some(path) = config.replay_paths.first() {
-                    console_log(&format!("Loading path: {:?}", path));
-                    set_replay_path.set(path.clone());
-                    set_scan_button_enabled.set(true);
-                }
+        match serde_wasm_bindgen::from_value::<String>(invoke("optimize_replay_path", args).await) {
+            Ok(stats) => {
+                set_optimize_button_enabled.set(true);
+                console_log(&format!("Optimize completed: {}", stats));
             }
             Err(e) => {
-                console_log(&format!("Error invoking basic_scan_replay_path: {:?}", e));
-                set_scan_button_enabled.set(true);
+                console_log(&format!("Error invoking optimize_replay_path: {:?}", e));
+                set_optimize_button_enabled.set(true);
                 return;
             }
         }
     });
+}
+
+pub fn trigger_basic_scan_replay_path(
+    ev: MouseEvent,
+    replay_path: ReadSignal<String>,
+    disable_parallel_scans: ReadSignal<bool>,
+    set_scan_button_enabled: WriteSignal<bool>,
+    data: Store<SC2ReplaysDirStatsTable>,
+) {
+    ev.prevent_default();
+    let name = replay_path.get_untracked();
+    let disable_parallel = disable_parallel_scans.get_untracked();
+    if name.is_empty() {
+        console_log("Replay path is empty.");
+        return;
+    }
+    set_scan_button_enabled.set(false);
+
+    spawn_local(async move {
+        let args = serde_wasm_bindgen::to_value(&AppSettings {
+            disable_parallel_scans: disable_parallel,
+            replay_path: name,
+            has_arrow_ipc_export: false,
+        })
+        .unwrap();
+        // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+        match serde_wasm_bindgen::from_value::<SC2ReplaysDirStats>(
+            invoke("basic_scan_replay_path", args).await,
+        ) {
+            Ok(stats) => {
+                set_scan_button_enabled.set(true);
+                let mut stats_table: SC2ReplaysDirStatsTable = stats.into();
+                console_log(&format!("New data = {:?}", stats_table));
+                data.top_10_players().write().retain(|_| false);
+                data.top_10_players()
+                    .write()
+                    .append(&mut stats_table.top_10_players);
+                data.top_10_maps().write().retain(|_| false);
+                data.top_10_maps()
+                    .write()
+                    .append(&mut stats_table.top_10_maps);
+                data.total_files().patch(stats_table.total_files);
+                data.total_supported_replays()
+                    .patch(stats_table.total_supported_replays);
+                data.ability_supported_replays()
+                    .patch(stats_table.ability_supported_replays);
+            }
+            Err(e) => {
+                console_log(&format!("Error invoking basic_scan_replay_path: {:?}", e));
+                set_scan_button_enabled.set(true);
+            }
+        }
+    });
+}
+
+#[component]
+pub fn ScanDirectory() -> impl IntoView {
+    let (replay_path, set_replay_path) = signal(String::new());
+    let (scan_button_enabled, set_scan_button_enabled) = signal(false);
+    let (optimize_button_enabled, set_optimize_button_enabled) = signal(false);
+    let (disable_parallel_scans, set_disable_parallel_scans) = signal(false);
+    let (has_arrow_ipc_export, set_has_arrow_ipc_export) = signal(false);
+
+    spawn_local(async move {
+        // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+        match serde_wasm_bindgen::from_value::<AppSettings>(
+            invoke_without_args("get_current_app_config").await,
+        ) {
+            Ok(config) => {
+                console_log(&format!("Loaded app config: {:?}", config));
+                set_disable_parallel_scans.set(config.disable_parallel_scans);
+                set_replay_path.set(config.replay_path);
+                set_has_arrow_ipc_export.set(config.has_arrow_ipc_export);
+            }
+            Err(e) => {
+                console_log(&format!("Error invoking get_current_app_config: {:?}", e));
+            }
+        }
+        set_scan_button_enabled.set(true);
+        set_optimize_button_enabled.set(true);
+    });
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
         set_scan_button_enabled.set(v.len() > 0);
+        set_optimize_button_enabled.set(v.len() > 0);
         set_replay_path.set(v);
     };
-    let fake_data = SC2ReplaysDirStats {
-        total_files: 0,
-        total_supported_replays: 0,
-        ability_supported_replays: 0,
-        top_10_maps: vec![],
-        top_10_players: vec![],
-    };
-    let fake_data_table: SC2ReplaysDirStatsTable = fake_data.into();
-    let data = Store::new(fake_data_table);
-
-    let trigger_basic_scan_replay_path = move |ev: MouseEvent| {
-        ev.prevent_default();
-        let name = replay_path.get_untracked();
-        let disable_parallel = disable_parallel_scans.get_untracked();
-        if name.is_empty() {
-            console_log("Replay path is empty.");
-            return;
-        }
-        set_scan_button_enabled.set(false);
-
-        spawn_local(async move {
-            let args = serde_wasm_bindgen::to_value(&AppSettings {
-                disable_parallel_scans: disable_parallel,
-                replay_paths: vec![name],
-            })
-            .unwrap();
-            // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-            match serde_wasm_bindgen::from_value::<SC2ReplaysDirStats>(
-                invoke("basic_scan_replay_path", args).await,
-            ) {
-                Ok(stats) => {
-                    set_scan_button_enabled.set(true);
-                    let mut stats_table: SC2ReplaysDirStatsTable = stats.into();
-                    console_log(&format!("New data = {:?}", stats_table));
-                    data.top_10_players().write().retain(|_| false);
-                    data.top_10_players()
-                        .write()
-                        .append(&mut stats_table.top_10_players);
-                    data.top_10_maps().write().retain(|_| false);
-                    data.top_10_maps()
-                        .write()
-                        .append(&mut stats_table.top_10_maps);
-                    data.total_files().patch(stats_table.total_files);
-                    data.total_supported_replays()
-                        .patch(stats_table.total_supported_replays);
-                    data.ability_supported_replays()
-                        .patch(stats_table.ability_supported_replays);
-                }
-                Err(e) => {
-                    console_log(&format!("Error invoking basic_scan_replay_path: {:?}", e));
-                    set_scan_button_enabled.set(true);
-                    return;
-                }
-            }
-        });
-    };
+    let data = Store::new(SC2ReplaysDirStatsTable::from(SC2ReplaysDirStats::default()));
 
     view! {
         <div class="grid grid-cols-8 grid-rows-1 gap-1">
@@ -123,9 +153,15 @@ pub fn ScanDirectory() -> impl IntoView {
             <div class="col-span-2 justify-start">
                 <button
                     class={move || if replay_path.get().len() > 0 { "btn btn-primary btn-sm m-0" } else { "btn btn-disabled btn-sm m-0" }}
-                    on:click=trigger_basic_scan_replay_path
+                    on:click=move |ev: MouseEvent| trigger_basic_scan_replay_path(
+                        ev,
+                        replay_path.clone(),
+                        disable_parallel_scans.clone(),
+                        set_scan_button_enabled.clone(),
+                        data.clone(),
+                    )
                     disabled= {move || !scan_button_enabled.get() }
-                    title="Initial scanfor StarCraft II replays">
+                    title="Initial scan for StarCraft II replays">
                     {
                         move || if replay_path.get().len() > 0{
                             "Scan"
@@ -138,11 +174,16 @@ pub fn ScanDirectory() -> impl IntoView {
                 </button>
                 <button
                     class={move || if replay_path.get().len() > 0 { "btn btn-success btn-sm m-0" } else { "btn btn-disabled btn-sm m-0" }}
-                    on:click=trigger_basic_scan_replay_path
-                    disabled= {move || !scan_button_enabled.get() }
+                    on:click=move |ev: MouseEvent| trigger_optimize_replay_path(
+                        ev,
+                        replay_path.clone(),
+                        disable_parallel_scans.clone(),
+                        set_optimize_button_enabled.clone(),
+                    )
+                    disabled= {move || !optimize_button_enabled.get() }
                     title="Optimize the replay generating Arrow files (may take some time)">
                     {
-                        move || if replay_path.get().len() > 0 && !scan_button_enabled.get() {
+                        move || if replay_path.get().len() > 0 && !optimize_button_enabled.get() {
                             "Optimizing..."
                         } else {
                             "Optimize"
@@ -151,40 +192,41 @@ pub fn ScanDirectory() -> impl IntoView {
                 </button>
             </div>
             <div class="col-span-1 flex justify-end">
-                <label class="label cursor-pointer" title="Disable Parallel Processing (less CPU usage)">
+                <label class="btn btn-sm btn-circle swap swap-rotate"
+                    title=move || if disable_parallel_scans.get() {
+                        "Enable Parallel Processing"
+                    } else {
+                        "Disable Parallel Processing"
+                    }
+                >
                     <input type="checkbox"
-                        class=move || if disable_parallel_scans.get() {
-                            "btn btn-soft my-0 mx-0 btn-active"
-                        } else {
-                            "btn btn-soft my-0 mx-0"
-                        }
                         checked=move || disable_parallel_scans.get()
                         on:click=move |_| set_disable_parallel_scans.set(!disable_parallel_scans.get()) />
-                        <span
-                        title=move || if disable_parallel_scans.get() {
+                    <Icon icon=CPU weight=IconWeight::Bold
+                        prop:title=move || if disable_parallel_scans.get() {
                             "Parallel Processing Disabled"
                         } else {
                             "Parallel Processing Enabled"
                         }
-                        class=move || if disable_parallel_scans.get() {
-                            "label-text text-success mx-1"
+                        prop:class=move || if disable_parallel_scans.get() {
+                            "swap-on fill-current"
                         } else {
-                            "label-text text-warning-content mx-1"
-                        } >
-                        <Icon icon=CPU weight=IconWeight::Bold
-                            color=move || if disable_parallel_scans.get() {
-                                "red"
-                            } else {
-                                "green"
-                            }
-                            />
-                        </span>
+                            "swap-off fill-current"
+                        }
+                        color=move || if disable_parallel_scans.get() {
+                            "orange"
+                        } else {
+                            "green"
+                        }
+                        />
                 </label>
             </div>
         </div>
-        <ReplayScanTable
-            data
-         />
+        <Show when={move || data.total_files().get() > 0}>
+            <ReplayScanTable
+                data
+            />
+         </Show>
     }
 }
 
