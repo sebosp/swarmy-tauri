@@ -5,7 +5,7 @@ use leptos::ev::MouseEvent;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use phosphor_leptos::{Icon, IconWeight, CPU};
+use phosphor_leptos::{Icon, IconWeight, CPU, DATABASE, FOLDERS, X_CIRCLE};
 use reactive_graph::traits::Read;
 use reactive_graph::traits::Write;
 use reactive_stores::{Patch, Store};
@@ -17,6 +17,7 @@ pub fn trigger_optimize_replay_path(
     replay_path: ReadSignal<String>,
     disable_parallel_scans: ReadSignal<bool>,
     set_optimize_button_enabled: WriteSignal<bool>,
+    set_display_backend_error: WriteSignal<String>,
 ) {
     ev.prevent_default();
     let name = replay_path.get_untracked();
@@ -43,7 +44,7 @@ pub fn trigger_optimize_replay_path(
             Err(e) => {
                 console_log(&format!("Error invoking optimize_replay_path: {:?}", e));
                 set_optimize_button_enabled.set(true);
-                return;
+                set_display_backend_error.set(format!("Error optimizing replay path: {:?}", e));
             }
         }
     });
@@ -109,6 +110,7 @@ pub fn ScanDirectory() -> impl IntoView {
     let (optimize_button_enabled, set_optimize_button_enabled) = signal(false);
     let (disable_parallel_scans, set_disable_parallel_scans) = signal(false);
     let (has_arrow_ipc_export, set_has_arrow_ipc_export) = signal(false);
+    let (display_backend_error, set_display_backend_error) = signal(String::new());
 
     spawn_local(async move {
         // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -130,8 +132,8 @@ pub fn ScanDirectory() -> impl IntoView {
     });
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
-        set_scan_button_enabled.set(v.len() > 0);
-        set_optimize_button_enabled.set(v.len() > 0);
+        set_scan_button_enabled.set(!v.is_empty());
+        set_optimize_button_enabled.set(!v.is_empty());
         set_replay_path.set(v);
     };
     let data = Store::new(SC2ReplaysDirStatsTable::from(SC2ReplaysDirStats::default()));
@@ -152,18 +154,18 @@ pub fn ScanDirectory() -> impl IntoView {
             </div>
             <div class="col-span-2 justify-start">
                 <button
-                    class={move || if replay_path.get().len() > 0 { "btn btn-primary btn-sm m-0" } else { "btn btn-disabled btn-sm m-0" }}
+                    class={move || if !replay_path.get().is_empty() { "btn btn-primary btn-sm m-0" } else { "btn btn-disabled btn-sm m-0" }}
                     on:click=move |ev: MouseEvent| trigger_basic_scan_replay_path(
                         ev,
-                        replay_path.clone(),
-                        disable_parallel_scans.clone(),
-                        set_scan_button_enabled.clone(),
-                        data.clone(),
+                        replay_path,
+                        disable_parallel_scans,
+                        set_scan_button_enabled,
+                        data,
                     )
                     disabled= {move || !scan_button_enabled.get() }
                     title="Initial scan for StarCraft II replays">
                     {
-                        move || if replay_path.get().len() > 0{
+                        move || if !replay_path.get().is_empty() {
                             "Scan"
                         } else if scan_button_enabled.get() {
                             "Scanning..."
@@ -173,17 +175,18 @@ pub fn ScanDirectory() -> impl IntoView {
                     }
                 </button>
                 <button
-                    class={move || if replay_path.get().len() > 0 { "btn btn-success btn-sm m-0" } else { "btn btn-disabled btn-sm m-0" }}
+                    class={move || if !replay_path.get().is_empty() { "btn btn-success btn-sm m-0" } else { "btn btn-disabled btn-sm m-0" }}
                     on:click=move |ev: MouseEvent| trigger_optimize_replay_path(
                         ev,
-                        replay_path.clone(),
-                        disable_parallel_scans.clone(),
-                        set_optimize_button_enabled.clone(),
+                        replay_path,
+                        disable_parallel_scans,
+                        set_optimize_button_enabled,
+                        set_display_backend_error
                     )
                     disabled= {move || !optimize_button_enabled.get() }
                     title="Optimize the replay generating Arrow files (may take some time)">
                     {
-                        move || if replay_path.get().len() > 0 && !optimize_button_enabled.get() {
+                        move || if !replay_path.get().is_empty() && !optimize_button_enabled.get() {
                             "Optimizing..."
                         } else {
                             "Optimize"
@@ -222,10 +225,28 @@ pub fn ScanDirectory() -> impl IntoView {
                 </label>
             </div>
         </div>
-        <Show when={move || data.total_files().get() > 0}>
+        <Show when={move || !display_backend_error.get().is_empty()}>
+            <div role="alert" class="alert alert-error shadow-lg m-1 p-1">
+                <Icon icon=X_CIRCLE weight=IconWeight::Bold prop:class="stroke-current"/>
+                <span>{move || display_backend_error.get()}</span>
+            </div>
+         </Show>
+        <Show when={move || data.total_files().get() > 0 && !has_arrow_ipc_export.get()}>
+            <div role="alert" class="alert alert-warning alert-soft m-1 p-1">
+                <Icon icon=FOLDERS weight=IconWeight::Bold prop:class="stroke-current"/>
+                <span>
+                "Directory is not optimized, click on Optimize to generate the optimized snapshot, this may take a while. "
+                "A subdirectory named "<b><code>"ipc"</code></b>" will be created in the chosen folder with the optimized snapshot."</span>
+            </div>
             <ReplayScanTable
                 data
             />
+         </Show>
+        <Show when={move || data.total_files().get() > 0 && has_arrow_ipc_export.get()}>
+            <div role="alert" class="alert alert-success shadow-lg mt-4">
+                <Icon icon=DATABASE weight=IconWeight::Bold prop:class="stroke-current"/>
+                <span>"Directory has been optimized."</span>
+            </div>
          </Show>
     }
 }
@@ -256,7 +277,7 @@ pub fn ReplayScanTable(data: Store<SC2ReplaysDirStatsTable>) -> impl IntoView {
         <div class="flex gap-4">
             <div class="flex-item grow">
                 <h2 class="text-neutral-content flex justify-center bg-gray-800">"Top 10 Players"</h2>
-                <table class="table bg-gray-500 table-sm table-zebra">
+                <table class="table bg-gray-500 table-xs table-zebra rounded-box">
                     <thead class="bg-gray-700">
                     <tr>
                         <th></th>
@@ -289,7 +310,7 @@ pub fn ReplayScanTable(data: Store<SC2ReplaysDirStatsTable>) -> impl IntoView {
             </div>
            <div class="flex-item grow">
                 <h2 class="text-neutral-content flex justify-center bg-gray-800">"Top 10 Maps"</h2>
-                <table class="table bg-gray-500 table-sm table-zebra">
+                <table class="table bg-gray-500 table-xs table-zebra rounded-box">
                     <thead class="bg-gray-700">
                     <tr>
                         <th></th>

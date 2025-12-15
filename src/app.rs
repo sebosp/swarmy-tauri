@@ -17,8 +17,8 @@ pub fn Main() -> impl IntoView {
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m 30.44,10.7c -1.71,-2.89 -9.15,-4.78 -7.95,0.48 1.8,4.38 3.85,8.67 5.64,13.07 0.32,1.1 2.94,6.27 1.58,4.5C 24.3,21.67 18.89,14.58 13.49,7.49 15.63,5.42 17.78,3.35 19.93,1.27c 5.2,0.53 7.63,5.82 10.51,9.43z" />
         </svg>
         <div class="flex flex-col items-center mt-3 border-t border-purple-700">
-            <SidebarMenuItem name="Home" active_page=active_page.clone() set_active_page=set_active_page.clone() />
-            <SidebarMenuItem name="Scan" active_page=active_page.clone() set_active_page=set_active_page.clone() />
+            <SidebarMenuItem name="Home" active_page=active_page set_active_page=set_active_page />
+            <SidebarMenuItem name="Scan" active_page=active_page set_active_page=set_active_page />
         </div>
         <div class="flex flex-col items-center mt-2 border-t border-purple-700">
             <a class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-gray-700 hover:text-gray-300" href="#">

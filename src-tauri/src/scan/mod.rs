@@ -70,7 +70,7 @@ pub async fn basic_scan_replay_path(
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn optimize_replay_path(
-    app_handle: tauri::AppHandle,
+    _app_handle: tauri::AppHandle,
     replay_path: String,
     disable_parallel_scans: bool,
 ) -> Result<(), String> {
@@ -78,6 +78,20 @@ pub async fn optimize_replay_path(
     let t = std::thread::spawn(move || {
         let path = PathBuf::from(&replay_path);
         let destination = path.join("ipcs");
+        if !destination.exists() {
+            std::fs::create_dir_all(&destination).map_err(|e| {
+                log::error!(
+                    "Error creating destination directory {}: {}",
+                    destination.display(),
+                    e
+                );
+                format!(
+                    "Error creating destination directory {}: {:?}",
+                    destination.display(),
+                    e
+                )
+            })?;
+        }
         log::info!(
             "Optimizing replays directory: {} and storing into {}",
             path.display(),
@@ -112,5 +126,5 @@ pub async fn optimize_replay_path(
             }
         }
     });
-    t.join().unwrap()
+    t.join()
 }
