@@ -13,18 +13,19 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1.0"
 serde-wasm-bindgen = "0.6"
 console_error_panic_hook = "0.1.7"
-s2protocol = { git = "https://www.github.com/sebosp/s2protocol-rs", branch="init-include-assets", default-features = false, features = ["arrow"]}
 reactive_stores = "0.3"
 reactive_graph = "0.2"
 phosphor-leptos = "0.8.0"
-swarmy-tauri-common = {path = "swarmy-tauri-common" }
+swarmy-tauri-common = { path = "swarmy-tauri-common" }
+s2protocol = { workspace = true }
 
 [workspace]
-members = [
-    "src-tauri",
-    "swarmy-tauri-common"
-]
+members = ["src-tauri", "swarmy-tauri-common"]
 
+[workspace.dependencies]
+s2protocol = { git = "https://www.github.com/sebosp/s2protocol-rs", branch = "init-include-assets", default-features = false, features = [
+    "dep_arrow",
+] }
 
 [profile.dev]
 incremental = true
