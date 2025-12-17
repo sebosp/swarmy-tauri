@@ -15,10 +15,13 @@ pub fn load_app_settings_from_store<R: tauri::Runtime>(
         .and_then(|v| v.as_str().map(|s| s.to_string()))
         .unwrap_or_default();
 
-    let has_arrow_ipc_export = store
-        .get("has_arrow_ipc_export")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
+    let mut has_arrow_ipc_export = false;
+
+    // if the ipc directory exists we can set has_arrow_ipc_export to true
+    let ipc_path = std::path::Path::new(&replay_path).join("ipcs");
+    if ipc_path.exists() && ipc_path.is_dir() {
+        has_arrow_ipc_export = true;
+    }
 
     Ok(AppSettings {
         disable_parallel_scans,
