@@ -31,7 +31,7 @@ pub async fn get_snapshot_metadata(replay_path: String) -> ApiResponse {
                 ResponseMetaBuilder::new(true)
                     .duration_ms(init_time.elapsed().as_millis() as u64)
                     .build(),
-                serde_json::to_string(&val).unwrap_or_default() ,
+                serde_json::to_string(&val).unwrap_or_default(),
             ),
             Err(e) => {
                 log::error!("Error getting snapshot metadata: {}", e);
