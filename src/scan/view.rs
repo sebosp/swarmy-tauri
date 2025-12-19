@@ -5,7 +5,7 @@ use leptos::ev::MouseEvent;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use phosphor_leptos::{Icon, IconWeight, CPU, DATABASE, FOLDERS, X_CIRCLE};
+use phosphor_leptos::{Icon, IconWeight, BARCODE, CPU, DATABASE, FOLDERS, HOURGLASS, X_CIRCLE};
 use reactive_graph::traits::Read;
 use reactive_graph::traits::Write;
 use reactive_stores::{Patch, Store};
@@ -183,6 +183,11 @@ pub fn ScanDirectory() -> impl IntoView {
                     disabled=move || !scan_button_enabled.get()
                     title="Initial scan for StarCraft II replays"
                 >
+                    <Icon
+                        icon=(move || if scan_button_enabled.get() { HOURGLASS } else { BARCODE })()
+                        weight=IconWeight::Light
+                        prop:class="stroke-current"
+                    />
                     {move || {
                         if !app_settings.get().replay_path.is_empty() {
                             "Scan"
@@ -210,6 +215,7 @@ pub fn ScanDirectory() -> impl IntoView {
                     disabled=move || !optimize_button_enabled.get()
                     title="Optimize the replay generating Arrow files (may take some time)"
                 >
+                    <Icon icon=DATABASE weight=IconWeight::Light prop:class="stroke-current" />
                     {move || {
                         if !app_settings.get().replay_path.is_empty()
                             && !optimize_button_enabled.get()
@@ -286,9 +292,9 @@ pub fn ScanDirectory() -> impl IntoView {
         <Show when=move || {
             data.total_files().get() > 0 && app_settings.get().has_arrow_ipc_export
         }>
-            <div role="alert" class="alert alert-success shadow-lg mt-4">
+            <div role="alert" class="alert alert-success alert-soft m-1 p-1">
                 <Icon icon=DATABASE weight=IconWeight::Bold prop:class="stroke-current" />
-                <span>"Directory has been optimized."</span>
+                <span>"Directory is optimized."</span>
             </div>
         </Show>
     }

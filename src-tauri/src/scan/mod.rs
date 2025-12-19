@@ -73,37 +73,33 @@ pub async fn optimize_replay_path(
     replay_path: String,
     disable_parallel_scans: bool,
 ) -> ApiResponse {
-    let initial_duration = std::time::Instant::now();
     // create a thread to scan the directory in the background:
     let t = std::thread::spawn(move || {
-        match try_optimize_replay_path(replay_path, disable_parallel_scans).map_err(|e| {
-            log::error!("Error optimizing replays: {}", e);
-            e
-        }) {
-            Ok(()) => Ok(String::from("Optimization completed successfully.")),
-            Err(e) => Err(format!("Error optimizing replays: {:?}", e)),
-        }
-    });
-    match t.join().unwrap() {
-        Ok(val) => ApiResponse::new(
+        let init_time = std::time::Instant::now();
+        match try_optimize_replay_path(replay_path, disable_parallel_scans)
+        {
+            Ok(val) => ApiResponse::new(
             ResponseMetaBuilder::new(true)
-                .duration_ms(initial_duration.elapsed().as_millis() as u64)
+                .duration_ms(init_time.elapsed().as_millis() as u64)
                 .build(),
             val,
         ),
-        Err(e) => ApiResponse::new(
-            ResponseMetaBuilder::new(false)
-                .duration_ms(initial_duration.elapsed().as_millis() as u64)
+            Err(e) => {
+            log::error!("Error optimizing replays: {}", e);
+        ApiResponse::new(
+            ResponseMetaBuilder::new(true)
+                .duration_ms(init_time.elapsed().as_millis() as u64)
                 .build(),
-            format!("Error optimizing replays: {:?}", e),
-        ),
-    }
+            format!("Error optimizing replays: {:?}", e))
+        }}
+    });
+    t.join().unwrap()
 }
 
 fn try_optimize_replay_path(
     replay_path: String,
     disable_parallel_scans: bool,
-) -> Result<(), SwarmyTauriError> {
+) -> Result<String, SwarmyTauriError> {
     let path = PathBuf::from(&replay_path);
     let destination = path.join("ipcs");
     if !destination.exists() {
@@ -123,11 +119,12 @@ fn try_optimize_replay_path(
         min_version: None,
         max_version: None,
     };
-    Ok(ArrowIpcTypes::handle_arrow_ipc_cmd(
+    ArrowIpcTypes::handle_arrow_ipc_cmd(
         path,
         destination,
         &props,
         &versioned_abilities,
         disable_parallel_scans,
-    )?)
+    )?;
+    Ok(String::from("Optimization completed successfully."))
 }

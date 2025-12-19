@@ -4,6 +4,8 @@ pub mod scan;
 pub use scan::*;
 pub mod settings;
 pub use settings::*;
+pub mod snapshot_stats;
+pub use snapshot_stats::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -20,7 +22,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_current_app_config,
             basic_scan_replay_path,
-            optimize_replay_path
+            optimize_replay_path,
+            get_snapshot_metadata,
         ])
         .plugin(tauri_plugin_store::Builder::default().build())
         .run(tauri::generate_context!())
