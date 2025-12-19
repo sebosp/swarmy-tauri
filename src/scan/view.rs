@@ -289,9 +289,7 @@ pub fn ScanDirectory() -> impl IntoView {
             </div>
             <ReplayScanTable data />
         </Show>
-        <Show when=move || {
-            data.total_files().get() > 0 && app_settings.get().has_arrow_ipc_export
-        }>
+        <Show when=move || { app_settings.get().has_arrow_ipc_export }>
             <div role="alert" class="alert alert-success alert-soft m-1 p-1">
                 <Icon icon=DATABASE weight=IconWeight::Bold prop:class="stroke-current" />
                 <span>"Directory is optimized."</span>
