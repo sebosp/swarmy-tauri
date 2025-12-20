@@ -1,7 +1,7 @@
 //! Swarmy Tauri UI Library
 
-pub mod scan;
-pub use scan::*;
+pub mod mpq_file_scan;
+pub use mpq_file_scan::*;
 pub mod settings;
 pub use settings::*;
 pub mod snapshot_stats;

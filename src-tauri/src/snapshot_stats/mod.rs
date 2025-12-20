@@ -10,6 +10,14 @@ pub struct SnapshotStats {
     pub directory_size: u64,
     /// The time of modification of the details IPC file.
     pub date_modified: std::time::SystemTime,
+    /// The number of maps in the snapshot
+    pub num_maps: u32,
+    /// The number of players in the snapshot
+    pub num_players: u32,
+    /// The minimum date of the snapshot taken
+    pub min_date: std::time::SystemTime,
+    /// The maximum date of the snapshot taken
+    pub max_date: std::time::SystemTime,
 }
 
 impl Default for SnapshotStats {
@@ -17,6 +25,10 @@ impl Default for SnapshotStats {
         SnapshotStats {
             directory_size: 0,
             date_modified: std::time::SystemTime::UNIX_EPOCH,
+            num_maps: 0,
+            num_players: 0,
+            min_date: std::time::SystemTime::UNIX_EPOCH,
+            max_date: std::time::SystemTime::UNIX_EPOCH,
         }
     }
 }
@@ -64,5 +76,6 @@ fn try_get_snapshot_metadata(replay_path: String) -> Result<SnapshotStats, Swarm
     Ok(SnapshotStats {
         directory_size,
         date_modified,
+        ..Default::default()
     })
 }

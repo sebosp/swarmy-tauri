@@ -67,7 +67,6 @@ pub fn trigger_optimize_replay_path(
 pub fn trigger_basic_scan_replay_path(
     ev: MouseEvent,
     app_settings: ReadSignal<AppSettings>,
-    set_scan_button_enabled: WriteSignal<bool>,
     backend_response: WriteSignal<ApiResponse>,
     data: Store<SC2ReplaysDirStatsTable>,
 ) {
@@ -77,7 +76,6 @@ pub fn trigger_basic_scan_replay_path(
         console_log("Replay path is empty.");
         return;
     }
-    set_scan_button_enabled.set(false);
 
     let app_settings_cp = app_settings.get_untracked();
 
@@ -88,7 +86,6 @@ pub fn trigger_basic_scan_replay_path(
             invoke("basic_scan_replay_path", args).await,
         ) {
             Ok(stats) => {
-                set_scan_button_enabled.set(true);
                 let mut stats_table: SC2ReplaysDirStatsTable = stats.into();
                 console_log(&format!("New data = {:?}", stats_table));
                 data.top_10_players().write().retain(|_| false);
@@ -107,7 +104,6 @@ pub fn trigger_basic_scan_replay_path(
             }
             Err(e) => {
                 console_log(&format!("Error invoking basic_scan_replay_path: {:?}", e));
-                set_scan_button_enabled.set(true);
             }
         }
     });
@@ -116,7 +112,6 @@ pub fn trigger_basic_scan_replay_path(
 #[component]
 pub fn ScanDirectory() -> impl IntoView {
     let (app_settings, set_app_settings) = signal(AppSettings::default());
-    let (scan_button_enabled, set_scan_button_enabled) = signal(false);
     let (optimize_button_enabled, set_optimize_button_enabled) = signal(false);
     let (disable_parallel_scans, set_disable_parallel_scans) = signal(false);
     let (backend_response, set_backend_response) = signal(ApiResponse {
@@ -137,12 +132,10 @@ pub fn ScanDirectory() -> impl IntoView {
                 console_log(&format!("Error invoking get_current_app_config: {:?}", e));
             }
         }
-        set_scan_button_enabled.set(true);
         set_optimize_button_enabled.set(true);
     });
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
-        set_scan_button_enabled.set(!v.is_empty());
         set_optimize_button_enabled.set(!v.is_empty());
         set_app_settings.update(|settings| {
             settings.replay_path = v;
@@ -176,27 +169,24 @@ pub fn ScanDirectory() -> impl IntoView {
                     on:click=move |ev: MouseEvent| trigger_basic_scan_replay_path(
                         ev,
                         app_settings,
-                        set_scan_button_enabled,
                         set_backend_response,
                         data,
                     )
-                    disabled=move || !scan_button_enabled.get()
+                    disabled=move || app_settings.get().replay_path.is_empty()
                     title="Initial scan for StarCraft II replays"
                 >
                     <Icon
-                        icon=(move || if scan_button_enabled.get() { HOURGLASS } else { BARCODE })()
+                        icon=(move || {
+                            if app_settings.get().replay_path.is_empty() {
+                                BARCODE
+                            } else {
+                                HOURGLASS
+                            }
+                        })()
                         weight=IconWeight::Light
                         prop:class="stroke-current"
                     />
-                    {move || {
-                        if !app_settings.get().replay_path.is_empty() {
-                            "Scan"
-                        } else if scan_button_enabled.get() {
-                            "Scanning..."
-                        } else {
-                            "Scan"
-                        }
-                    }}
+                    "Scan"
                 </button>
                 <button
                     class=move || {
