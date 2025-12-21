@@ -10,7 +10,7 @@ use swarmy_tauri_common::*;
 use tauri_plugin_store::StoreBuilder;
 
 #[tauri::command]
-pub fn get_current_app_config(app_handle: tauri::AppHandle) -> Result<AppSettings, String> {
+pub async fn get_current_app_config(app_handle: tauri::AppHandle) -> Result<AppSettings, String> {
     let store = StoreBuilder::new(&app_handle, "settings.json")
         .build()
         .map_err(|e| {
@@ -21,7 +21,7 @@ pub fn get_current_app_config(app_handle: tauri::AppHandle) -> Result<AppSetting
     // If there are no saved settings yet, this will return an error so we ignore the return value.
     let _ = store.reload();
 
-    let app_settings = load_app_settings_from_store(&store).map_err(|e| {
+    let app_settings = load_app_settings_from_store(&store).await.map_err(|e| {
         log::error!("Error loading app settings: {}", e);
         format!("Error loading app settings: {:?}", e)
     })?;

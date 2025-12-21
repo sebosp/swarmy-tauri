@@ -6,7 +6,6 @@ use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use phosphor_leptos::{Icon, IconWeight, BARCODE, CPU, DATABASE, FOLDERS, HOURGLASS, X_CIRCLE};
-use reactive_graph::traits::Read;
 use reactive_graph::traits::Write;
 use reactive_stores::{Patch, Store};
 use s2protocol::SC2ReplaysDirStats;
@@ -141,7 +140,7 @@ pub fn ScanDirectory() -> impl IntoView {
             settings.replay_path = v;
         });
     };
-    let data = Store::new(SC2ReplaysDirStatsTable::from(SC2ReplaysDirStats::default()));
+    let dir_stats_data = Store::new(SC2ReplaysDirStatsTable::from(SC2ReplaysDirStats::default()));
 
     view! {
         <div class="grid grid-cols-8 grid-rows-1 gap-1">
@@ -170,19 +169,17 @@ pub fn ScanDirectory() -> impl IntoView {
                         ev,
                         app_settings,
                         set_backend_response,
-                        data,
+                        dir_stats_data,
                     )
                     disabled=move || app_settings.get().replay_path.is_empty()
                     title="Initial scan for StarCraft II replays"
                 >
                     <Icon
-                        icon=(move || {
-                            if app_settings.get().replay_path.is_empty() {
-                                BARCODE
-                            } else {
-                                HOURGLASS
-                            }
-                        })()
+                        icon=if app_settings.get_untracked().replay_path.is_empty() {
+                            BARCODE
+                        } else {
+                            HOURGLASS
+                        }
                         weight=IconWeight::Light
                         prop:class="stroke-current"
                     />
@@ -266,7 +263,8 @@ pub fn ScanDirectory() -> impl IntoView {
             </div>
         </Show>
         <Show when=move || {
-            data.total_files().get() > 0 && !app_settings.get().has_arrow_ipc_export
+            dir_stats_data.total_files().get() > 0
+                && !app_settings.get().arrow_ipc_stats.directory_size > 0
         }>
             <div role="alert" class="alert alert-warning alert-soft m-1 p-1">
                 <Icon icon=FOLDERS weight=IconWeight::Bold prop:class="stroke-current" />
@@ -277,113 +275,13 @@ pub fn ScanDirectory() -> impl IntoView {
                     </b>" will be created in the chosen folder with the optimized snapshot."
                 </span>
             </div>
-            <ReplayScanTable data />
+            <ReplayScanTable dir_stats_data />
         </Show>
-        <Show when=move || { app_settings.get().has_arrow_ipc_export }>
+        <Show when=move || { app_settings.get().arrow_ipc_stats.directory_size > 0 }>
             <div role="alert" class="alert alert-success alert-soft m-1 p-1">
                 <Icon icon=DATABASE weight=IconWeight::Bold prop:class="stroke-current" />
                 <span>"Directory is optimized."</span>
             </div>
         </Show>
-    }
-}
-
-#[component]
-pub fn ReplayScanTable(data: Store<SC2ReplaysDirStatsTable>) -> impl IntoView {
-    view! {
-        <div class="flex flex-row">
-            <div class="flex-item basis-128">
-                <h3 class="text-neutral-content">
-                    "Replays: "
-                    <div class="badge badge-sm badge-ghost">{move || data.total_files().get()}</div>
-                </h3>
-            </div>
-            <div class="flex-item basis-128">
-                <h3
-                    class="text-info"
-                    title="Replays successfully parsed for GameEvents and TrackerEvents"
-                >
-                    "Basic: "
-                    <div class="badge badge-sm badge-info">
-                        {move || data.total_supported_replays().get()}
-                    </div>
-                </h3>
-            </div>
-            <div class="flex-item basis-128">
-                <h3 class="text-success" title="Replays with balance data available for abilities">
-                    "Enhanced Support: "
-                    <div class="badge badge-sm badge-success">
-                        {move || data.ability_supported_replays().get()}
-                    </div>
-                </h3>
-            </div>
-        </div>
-        <div class="flex gap-4">
-            <div class="flex-item grow">
-                <h2 class="text-neutral-content flex justify-center bg-gray-800">
-                    "Top 10 Players"
-                </h2>
-                <table class="table bg-gray-500 table-xs table-zebra rounded-box">
-                    <thead class="bg-gray-700">
-                        <tr>
-                            <th></th>
-                            <th>Clan</th>
-                            <th>Name</th>
-                            <th>Total Games</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <For
-                            each=move || data.top_10_players()
-                            key=|row| row.read().name.clone()
-                            children=|child| {
-                                let idx = child.clone().idx();
-                                let clan = child.clone().clan().clone();
-                                let name = child.clone().name().clone();
-                                let count = child.clone().count();
-                                view! {
-                                    <tr>
-                                        <th>{move || idx.get()}</th>
-                                        <td>{move || clan.get()}</td>
-                                        <td>{move || name.get()}</td>
-                                        <td>{move || count.get()}</td>
-                                    </tr>
-                                }
-                            }
-                        />
-                    </tbody>
-                </table>
-            </div>
-            <div class="flex-item grow">
-                <h2 class="text-neutral-content flex justify-center bg-gray-800">"Top 10 Maps"</h2>
-                <table class="table bg-gray-500 table-xs table-zebra rounded-box">
-                    <thead class="bg-gray-700">
-                        <tr>
-                            <th></th>
-                            <th>Map Title</th>
-                            <th>Total Games</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <For
-                            each=move || data.top_10_maps()
-                            key=|row| row.read().title.clone()
-                            children=|child| {
-                                let idx = child.clone().idx();
-                                let title = child.clone().title().clone();
-                                let count = child.clone().count();
-                                view! {
-                                    <tr>
-                                        <th>{move || idx.get()}</th>
-                                        <td>{move || title.get()}</td>
-                                        <td>{move || count.get()}</td>
-                                    </tr>
-                                }
-                            }
-                        />
-                    </tbody>
-                </table>
-            </div>
-        </div>
     }
 }

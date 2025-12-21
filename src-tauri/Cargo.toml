@@ -27,14 +27,10 @@ tauri-plugin-log = "2"
 log = "0.4"
 tauri-plugin-fs = "2"
 tauri-plugin-persisted-scope = "2"
-tauri-plugin-store = "2.4.1"
+tauri-plugin-store = "2"
 s2protocol = { workspace = true }
 swarmy-tauri-common = { path = "../swarmy-tauri-common" }
-polars = { version = "0.52.0", features = [
-  "full",
-  "trigonometry",
-  "regex",
-  "strings",
-  "top_k",
-  "dtype-full",
-] }
+chrono = "0.4.42"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+polars = { version = "0.52.0", default-features = false }

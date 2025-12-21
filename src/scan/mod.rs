@@ -5,6 +5,8 @@ use s2protocol::cli::SC2ReplaysDirStats;
 use serde::{Deserialize, Serialize};
 pub mod view;
 pub use view::*;
+pub mod mpq_file_scan;
+pub use mpq_file_scan::*;
 
 #[derive(Store, Debug, Clone, Serialize, Deserialize)]
 pub struct SC2ReplaysDirStatsTable {
