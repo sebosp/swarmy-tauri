@@ -10,6 +10,8 @@ use reactive_graph::traits::Write;
 use reactive_stores::{Patch, Store};
 use s2protocol::SC2ReplaysDirStats;
 use swarmy_tauri_common::*;
+use super::mpq_file_scan::ReplayScanTable;
+use super::arrow_ipc_stats::ArrowIpcStats;
 
 pub fn trigger_optimize_replay_path(
     ev: MouseEvent,
@@ -117,6 +119,7 @@ pub fn ScanDirectory() -> impl IntoView {
         meta: ResponseMeta::incomplete(),
         message: String::new(),
     });
+    let (arrow_ipc_stats, set_arrow_ipc_stats) = signal(SnapshotStats::default());
 
     spawn_local(async move {
         // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -125,6 +128,7 @@ pub fn ScanDirectory() -> impl IntoView {
         ) {
             Ok(config) => {
                 console_log(&format!("Loaded app config: {:?}", config));
+                *set_arrow_ipc_stats.write() = config.arrow_ipc_stats.clone();
                 *set_app_settings.write() = config;
             }
             Err(e) => {
@@ -282,6 +286,7 @@ pub fn ScanDirectory() -> impl IntoView {
                 <Icon icon=DATABASE weight=IconWeight::Bold prop:class="stroke-current" />
                 <span>"Directory is optimized."</span>
             </div>
+            <ArrowIpcStats arrow_ipc_stats />
         </Show>
     }
 }
