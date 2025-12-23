@@ -1,5 +1,6 @@
 //! Swarmy Tauri UI - Scan View
 
+use crate::scan::*;
 use crate::*;
 use leptos::ev::MouseEvent;
 use leptos::leptos_dom::logging::console_log;

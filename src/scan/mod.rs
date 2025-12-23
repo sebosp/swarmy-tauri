@@ -1,12 +1,12 @@
 //! SC2Replay Directory Scan and Export to Arrow IPC Module
 
+pub mod arrow_ipc_stats;
+pub mod mpq_file_scan;
+pub mod view;
+
 use reactive_stores::Store;
 use s2protocol::cli::SC2ReplaysDirStats;
 use serde::{Deserialize, Serialize};
-pub mod view;
-pub use view::*;
-pub mod mpq_file_scan;
-pub use mpq_file_scan::*;
 
 #[derive(Store, Debug, Clone, Serialize, Deserialize)]
 pub struct SC2ReplaysDirStatsTable {
