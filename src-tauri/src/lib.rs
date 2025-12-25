@@ -8,6 +8,8 @@ pub mod snapshot_stats;
 pub use snapshot_stats::*;
 pub mod common;
 pub use common::*;
+pub mod map_stats;
+pub use map_stats::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

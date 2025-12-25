@@ -63,7 +63,9 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
             <div class="col-span-1">
                 <p class="flex justify-center text-sky-400">"Snapshot statistics"</p>
             </div>
-            <div class="col-span-1 justify-center stats stats-vertical">
+        </div>
+        <div class="grid grid-cols-7">
+            <div class="col-span-3 stats">
                 <div class="stat shadow">
                     <div class="stat-figure text-primary">
                         <Icon
@@ -84,6 +86,9 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
                         {move || modif_dt.get().format("%Y-%m-%d %H:%M:%S %Z").to_string()}
                     </div>
                 </div>
+            </div>
+            <div class="col-span-1"></div>
+            <div class="col-span-3 stats">
                 <div class="stat shadow">
                     <div class="stat-figure text-primary">
                         <Icon
@@ -99,6 +104,10 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
                     </div>
                     <div class="stat-desc">"SC2Replay files"</div>
                 </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-7">
+            <div class="col-span-3 stats">
                 <div class="stat shadow">
                     <div class="stat-figure text-primary">
                         <Icon
@@ -117,6 +126,9 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
                         " directory"
                     </div>
                 </div>
+            </div>
+            <div class="col-span-1"></div>
+            <div class="col-span-3 stats">
                 <div class="stat shadow">
                     <div class="stat-figure text-primary">
                         <Icon
@@ -132,6 +144,10 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
                     </div>
                     <div class="stat-desc">"(unique maps)"</div>
                 </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-7">
+            <div class="col-span-3 stats">
                 <div class="stat shadow">
                     <div class="stat-figure text-primary">
                         <Icon
@@ -147,6 +163,9 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
                     </div>
                     <div class="stat-desc">"Minimum replay time"</div>
                 </div>
+            </div>
+            <div class="col-span-1"></div>
+            <div class="col-span-3 stats">
                 <div class="stat shadow">
                     <div class="stat-figure text-primary">
                         <Icon
@@ -163,7 +182,6 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
                     <div class="stat-desc">"Maximum replay time"</div>
                 </div>
             </div>
-            <div class="col-span-1"></div>
         </div>
     }
 }
