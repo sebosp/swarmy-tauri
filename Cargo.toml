@@ -18,6 +18,8 @@ reactive_graph = "0.2"
 phosphor-leptos = "0.8.0"
 swarmy-tauri-common = { path = "swarmy-tauri-common" }
 s2protocol = { workspace = true }
+si-scale = "0.3"
+chrono = { version = "0.4", features = ["serde"] }
 
 [workspace]
 members = ["src-tauri", "swarmy-tauri-common"]
