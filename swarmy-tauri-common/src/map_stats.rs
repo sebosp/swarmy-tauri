@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-/// Contains metadata information related to the minimun, maximum date of the snapshot taken, the number of
-/// files analyzed, the number of maps and the number of players in the analyzed collection
+/// Contains metadata information related to the minimun, maximum date of the map in the snapshot.
+/// The cache_handles contain downloadable assets from blizzard's CDN, even tho two maps may have
+/// the same title, if their cache_handles differ, they are considered different, maybe different
+/// versions, tests, etc.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MapStats {
     /// The size of the IPC files
@@ -32,4 +34,16 @@ impl Default for MapStats {
             cache_handles: String::new(),
         }
     }
+}
+
+/// Initial set of query params for the map stats arrow IPC file.
+/// XXX: We need to figure out how to handle multiple players.
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+pub struct MapStatsQuery {
+    /// The location of the arrow IPC files.
+    pub replay_path: String,
+    /// The name of the map.
+    pub map_title: String,
+    /// A player that must have played a game in the map.
+    pub player_name: String,
 }
