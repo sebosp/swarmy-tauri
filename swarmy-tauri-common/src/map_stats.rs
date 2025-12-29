@@ -38,7 +38,7 @@ impl Default for MapStats {
 
 /// Initial set of query params for the map stats arrow IPC file.
 /// XXX: We need to figure out how to handle multiple players.
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct MapStatsQuery {
     /// The location of the arrow IPC files.
     pub replay_path: String,
