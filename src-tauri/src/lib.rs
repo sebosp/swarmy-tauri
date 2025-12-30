@@ -28,6 +28,7 @@ pub fn run() {
             basic_scan_replay_path,
             optimize_replay_path,
             get_snapshot_metadata,
+            query_map_stats,
         ])
         .plugin(tauri_plugin_store::Builder::default().build())
         .run(tauri::generate_context!())
