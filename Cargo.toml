@@ -25,7 +25,7 @@ chrono = { version = "0.4", features = ["serde"] }
 members = ["src-tauri", "swarmy-tauri-common"]
 
 [workspace.dependencies]
-s2protocol = { git = "https://www.github.com/sebosp/s2protocol-rs", branch = "init-include-assets", default-features = false, features = [
+s2protocol = { version = "3.5.0", default-features = false, features = [
     "dep_arrow",
 ] }
 
