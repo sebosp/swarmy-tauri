@@ -151,7 +151,7 @@ pub fn ScanDirectory() -> impl IntoView {
         <div class="grid grid-cols-8 grid-rows-1 gap-1">
             <div class="col-span-5">
                 <label class="input input-sm w-full">
-                    "Path"
+                    <span class="label">"Path"</span>
                     <input
                         class="input input-sm my-0 mx-0"
                         id="scan-directory-input"
