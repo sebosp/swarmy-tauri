@@ -2,8 +2,9 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum SwarmyTauriError {
-    // #[error("Store Error")]
-    // TauriPluginStore(#[from] tauri_plugin_store::Error),
+    #[cfg(not(target_arch = "wasm32"))]
+    #[error("Store Error")]
+    TauriPluginStore(#[from] tauri_plugin_store::Error),
     #[error("StdError")]
     StdErr(#[from] Box<dyn std::error::Error>),
     #[error("S2proto Error")]
@@ -31,7 +32,8 @@ pub enum SwarmyTauriError {
 impl From<SwarmyTauriError> for String {
     fn from(err: SwarmyTauriError) -> Self {
         match err {
-            // SwarmyTauriError::TauriPluginStore(e) => format!("Store Error: {}", e),
+            #[cfg(not(target_arch = "wasm32"))]
+            SwarmyTauriError::TauriPluginStore(e) => format!("TauriPluginStore Error: {}", e),
             SwarmyTauriError::StdErr(e) => format!("StdError: {}", e),
             SwarmyTauriError::StdIo(e) => format!("StdIoError: {}", e),
             SwarmyTauriError::S2ProtoErr(e) => format!("S2proto Error: {}", e),
@@ -51,6 +53,8 @@ impl From<SwarmyTauriError> for String {
 #[serde(tag = "kind", content = "message")]
 #[serde(rename_all = "camelCase")]
 enum ErrorKind {
+    #[cfg(not(target_arch = "wasm32"))]
+    SwarmyTauriStore(String),
     StdErr(String),
     Io(String),
     Utf8(String),
@@ -71,6 +75,8 @@ impl serde::Serialize for SwarmyTauriError {
     {
         let error_message = self.to_string();
         let error_kind = match self {
+            #[cfg(not(target_arch = "wasm32"))]
+            Self::TauriPluginStore(_) => ErrorKind::SwarmyTauriStore(error_message),
             Self::StdErr(_) => ErrorKind::StdErr(error_message),
             Self::StdIo(_) => ErrorKind::Io(error_message),
             Self::Utf8(_) => ErrorKind::Utf8(error_message),
