@@ -40,8 +40,6 @@ impl Default for MapStats {
 /// XXX: We need to figure out how to handle multiple players.
 #[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct MapStatsQuery {
-    /// The location of the arrow IPC files.
-    pub replay_path: String,
     /// The name of the map.
     pub map_title: String,
     /// A player that must have played a game in the map.

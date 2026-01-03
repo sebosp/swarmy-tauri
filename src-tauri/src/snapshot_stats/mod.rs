@@ -30,6 +30,8 @@ pub async fn get_snapshot_metadata(replay_path: String) -> ApiResponse {
 
 /// Gets the list of maps from the details.ipc file
 pub fn try_get_snapshot_metadata(replay_path: String) -> Result<SnapshotStats, SwarmyTauriError> {
+    // remove trailing slash if exists
+    let replay_path = replay_path.trim_end_matches('/').to_string();
     let replay_path = format!("{}/ipcs/", replay_path);
     log::info!("Getting snapshot metadata from: {}", replay_path);
     // Add the size of all the files in state.source_dir

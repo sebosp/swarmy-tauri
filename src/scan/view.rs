@@ -111,17 +111,12 @@ pub fn trigger_basic_scan_replay_path(
     });
 }
 
-#[component]
-pub fn ScanDirectory() -> impl IntoView {
-    let (app_settings, set_app_settings) = signal(AppSettings::default());
-    let (optimize_button_enabled, set_optimize_button_enabled) = signal(false);
-    let (disable_parallel_scans, set_disable_parallel_scans) = signal(false);
-    let (backend_response, set_backend_response) = signal(ApiResponse {
-        meta: ResponseMeta::incomplete(),
-        message: String::new(),
-    });
-    let (arrow_ipc_stats, set_arrow_ipc_stats) = signal(SnapshotStats::default());
+fn fetch_get_current_app_config(
+    set_arrow_ipc_stats: WriteSignal<SnapshotStats>,
+    set_app_settings: WriteSignal<AppSettings>,
+    set_optimize_button_enabled: WriteSignal<bool>,
 
+) {
     spawn_local(async move {
         // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
         match serde_wasm_bindgen::from_value::<AppSettings>(
@@ -138,6 +133,20 @@ pub fn ScanDirectory() -> impl IntoView {
         }
         set_optimize_button_enabled.set(true);
     });
+}
+
+#[component]
+pub fn ScanDirectory() -> impl IntoView {
+    let (app_settings, set_app_settings) = signal(AppSettings::default());
+    let (optimize_button_enabled, set_optimize_button_enabled) = signal(false);
+    let (disable_parallel_scans, set_disable_parallel_scans) = signal(false);
+    let (backend_response, set_backend_response) = signal(ApiResponse {
+        meta: ResponseMeta::incomplete(),
+        message: String::new(),
+    });
+    let (arrow_ipc_stats, set_arrow_ipc_stats) = signal(SnapshotStats::default());
+
+    fetch_get_current_app_config(set_arrow_ipc_stats, set_app_settings, set_optimize_button_enabled);
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
         set_optimize_button_enabled.set(!v.is_empty());

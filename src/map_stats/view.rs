@@ -54,6 +54,7 @@ pub fn StatsByMap() -> impl IntoView {
         message: String::new(),
     });
     let map_stats_data = Store::new(MapStatsDataFrame::default());
+    trigger_fetch_query_map_stats(map_stats_data, query);
     view! {
         <div class="grid grid-cols-8 grid-rows-1 gap-1">
             <div class="col-span-3">
@@ -101,5 +102,39 @@ pub fn StatsByMap() -> impl IntoView {
 
 #[component]
 pub fn MapStatsDataTable(map_stats_data: Store<MapStatsDataFrame>) -> impl IntoView {
-    view! {}
+    view! {
+        <div class="overflow-x-auto w-full p-2">
+            <table class="table w-full">
+                <thead>
+                    <tr>
+                        <th>"Map Title"</th>
+                        <th>"Games Played"</th>
+                        <th>"Average Players"</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <For
+                        each=move || map_stats_data.res()
+                        key=|row| {
+                            format!(
+                                "{}:{}",
+                                row.read().ext_fs_id.clone(),
+                                row.read().user_init_data_name.clone(),
+                            )
+                        }
+                        children=|child| {
+                            view! {
+                                <tr>
+                                    <td>{child.read().title.clone()}</td>
+                                    <td>{child.read().ext_datetime.to_string()}</td>
+                                    <td>{child.read().user_init_data_clan_tag.clone()}</td>
+                                    <td>{child.read().user_init_data_name.clone()}</td>
+                                </tr>
+                            }
+                        }
+                    />
+                </tbody>
+            </table>
+        </div>
+    }
 }
