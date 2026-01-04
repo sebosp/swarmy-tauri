@@ -8,11 +8,11 @@ pub mod data;
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn query_map_stats(
-    _app_handle: tauri::AppHandle,
+    app_handle: tauri::AppHandle,
     map_title: String,
     player_name: String,
 ) -> ApiResponse{
-    let app_config = match get_current_app_config(_app_handle.clone()).await {
+    let app_config = match get_current_app_config(app_handle.clone()).await {
         Ok(config) => config,
         Err(e) => {
             return ApiResponse::new(
@@ -62,5 +62,5 @@ fn try_query_map_stats(
         query.map_title,
         query.player_name
     );
-    Ok("Not implemented yet".to_string())
+    Err(SwarmyTauriError::Other("Not implemented yet".to_string()))
 }

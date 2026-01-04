@@ -1,6 +1,8 @@
 /// Swarmy Tauri Library
 pub mod scan;
 pub mod map_stats;
+pub mod common;
+pub use common::*;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]

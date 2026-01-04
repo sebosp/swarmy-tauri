@@ -1,12 +1,11 @@
 //! Leptos view for map stats.
-use leptos::prelude::*;
-use reactive_stores::Store;
-use swarmy_tauri_common::*;
 use crate::*;
-use leptos::task::spawn_local;
-use serde::{Deserialize, Serialize};
 use leptos::leptos_dom::logging::console_log;
-use phosphor_leptos::{Icon, IconWeight, X_CIRCLE};
+use leptos::prelude::*;
+use leptos::task::spawn_local;
+use reactive_stores::Store;
+use serde::{Deserialize, Serialize};
+use swarmy_tauri_common::*;
 
 use s2protocol::details::PlayerLobbyDetails;
 
@@ -21,30 +20,47 @@ pub struct MapStatsDataFrame {
     pub per_page: usize,
 }
 
-
-async fn fetch_query_map_stats(query: MapStatsQuery) -> Result<MapStatsDataFrame, SwarmyTauriError> {
+async fn fetch_query_map_stats(
+    query: MapStatsQuery,
+) -> Result<ApiResponse, SwarmyTauriError> {
     let args = serde_wasm_bindgen::to_value(&query).unwrap();
     console_log(&format!(
         "Invoking fetch_query_map_stats with args: {:?}",
         args
     ));
     // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    let response = serde_wasm_bindgen::from_value::<ApiResponse>(
-        invoke("query_map_stats", args).await,
-    )?;
-            Ok(serde_json::from_str(&response.message)?)
+    let response =
+        serde_wasm_bindgen::from_value::<ApiResponse>(invoke("query_map_stats", args).await)?;
+    Ok(response)
 }
 
-fn trigger_fetch_query_map_stats(data: Store<MapStatsDataFrame>, query: ReadSignal<MapStatsQuery>) {
+fn trigger_fetch_query_map_stats(
+    data: Store<MapStatsDataFrame>,
+    query: ReadSignal<MapStatsQuery>,
+    set_backend_response: WriteSignal<ApiResponse>,
+) {
     let query_cp = query.get_untracked();
     spawn_local(async move {
-        *data.write() = fetch_query_map_stats(query_cp).await.unwrap_or_default();
+        console_log("Fetching map stats...");
+        match fetch_query_map_stats(query_cp).await{
+            Err(e) => {
+                console_log(&format!("Error fetching map stats: {:?}", e));
+                *set_backend_response.write() = ApiResponse {
+                    meta: ResponseMeta::incomplete(),
+                    message: format!("Error fetching map stats: {:?}", e),
+                };
+                return;
+            }
+            Ok(response) => {
+                *set_backend_response.write() = response.clone();
+                *data.write() = serde_json::from_str(&response.message).unwrap_or_default();
+            }
+        }
     });
 }
 
 #[component]
 pub fn StatsByMap() -> impl IntoView {
-
     let (query, set_query) = signal(MapStatsQuery::default());
     let (player_name, set_player_name) = signal(String::new());
     let (map_title, set_map_title) = signal(String::new());
@@ -54,45 +70,48 @@ pub fn StatsByMap() -> impl IntoView {
         message: String::new(),
     });
     let map_stats_data = Store::new(MapStatsDataFrame::default());
-    trigger_fetch_query_map_stats(map_stats_data, query);
+    trigger_fetch_query_map_stats(map_stats_data, query, set_backend_response);
     view! {
-        <div class="grid grid-cols-8 grid-rows-1 gap-1">
-            <div class="col-span-3">
-                <label class="input input-sm">
-                    <span class="label">"Map"</span>
-                    <input
-                        class="input input-sm my-0 mx-0"
-                        value=move || map_title.get()
-                        on:input=move |_| {
-                            trigger_fetch_query_map_stats(map_stats_data, query);
-                        }
-                        type="text"
-                    />
-                </label>
-            </div>
-            <div class="col-span-1"></div>
-            <div class="col-span-3">
-                <label class="input input-sm">
-                    <span class="label">"Player"</span>
-                    <input
-                        class="input input-sm my-0 mx-0"
-                        value=move || player_name.get()
-                        on:input=move |_| {
-                            trigger_fetch_query_map_stats(map_stats_data, query);
-                        }
-                        type="text"
-                    />
-                </label>
-            </div>
-            <div class="col-span-3"></div>
-            <Show when=move || {
-                !backend_response.get().meta.success && backend_response.get().meta.is_complete
-            }>
-                <div role="alert" class="alert alert-error shadow-lg m-1 p-1">
-                    <Icon icon=X_CIRCLE weight=IconWeight::Bold prop:class="stroke-current" />
-                    <span>{backend_response.get().message.clone()}</span>
+        <div>
+            <div class="grid grid-cols-8 grid-rows-1 gap-1">
+                <div class="col-span-3">
+                    <label class="input input-sm">
+                        <span class="label">"Map"</span>
+                        <input
+                            class="input input-sm my-0 mx-0"
+                            value=move || map_title.get()
+                            on:input=move |_| {
+                                trigger_fetch_query_map_stats(
+                                    map_stats_data,
+                                    query,
+                                    set_backend_response,
+                                );
+                            }
+                            type="text"
+                        />
+                    </label>
                 </div>
-            </Show>
+                <div class="col-span-1"></div>
+                <div class="col-span-3">
+                    <label class="input input-sm">
+                        <span class="label">"Player"</span>
+                        <input
+                            class="input input-sm my-0 mx-0"
+                            value=move || player_name.get()
+                            on:input=move |_| {
+                                trigger_fetch_query_map_stats(
+                                    map_stats_data,
+                                    query,
+                                    set_backend_response,
+                                );
+                            }
+                            type="text"
+                        />
+                    </label>
+                </div>
+                <div class="col-span-1"></div>
+            </div>
+            <DisplayBackendStatus backend_response />
             <Show when=move || { map_stats.get().total > 0 }>
                 <MapStatsDataTable map_stats_data />
             </Show>

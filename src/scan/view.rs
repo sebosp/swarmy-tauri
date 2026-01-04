@@ -6,7 +6,7 @@ use leptos::ev::MouseEvent;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use phosphor_leptos::{Icon, IconWeight, BARCODE, CPU, DATABASE, FOLDERS, HOURGLASS, X_CIRCLE};
+use phosphor_leptos::{Icon, IconWeight, BARCODE, CPU, DATABASE, FOLDERS, HOURGLASS};
 use reactive_graph::traits::Write;
 use reactive_stores::{Patch, Store};
 use s2protocol::SC2ReplaysDirStats;
@@ -18,11 +18,11 @@ pub fn trigger_optimize_replay_path(
     ev: MouseEvent,
     app_settings: ReadSignal<AppSettings>,
     set_optimize_button_enabled: WriteSignal<bool>,
-    backend_response: WriteSignal<ApiResponse>,
+    set_backend_response: WriteSignal<ApiResponse>,
 ) {
     ev.prevent_default();
     // Reset backend response status.
-    *backend_response.write() = ApiResponse::new_incomplete();
+    *set_backend_response.write() = ApiResponse::new_incomplete();
 
     if app_settings.get_untracked().replay_path.is_empty() {
         console_log("Replay path is empty.");
@@ -47,13 +47,13 @@ pub fn trigger_optimize_replay_path(
                 } else {
                     console_log(&format!("Optimize replay path failed: {:?}", res.message));
                 }
-                backend_response.set(res);
+                set_backend_response.set(res);
                 set_optimize_button_enabled.set(true);
             }
             Err(e) => {
                 console_log(&format!("Error invoking optimize_replay_path: {:?}", e));
                 set_optimize_button_enabled.set(true);
-                backend_response.set(ApiResponse {
+                set_backend_response.set(ApiResponse {
                     meta: ResponseMeta {
                         success: false,
                         duration_ms: 0,
@@ -69,11 +69,11 @@ pub fn trigger_optimize_replay_path(
 pub fn trigger_basic_scan_replay_path(
     ev: MouseEvent,
     app_settings: ReadSignal<AppSettings>,
-    backend_response: WriteSignal<ApiResponse>,
+    set_backend_response: WriteSignal<ApiResponse>,
     data: Store<SC2ReplaysDirStatsTable>,
 ) {
     ev.prevent_default();
-    *backend_response.write() = ApiResponse::new_incomplete();
+    *set_backend_response.write() = ApiResponse::new_incomplete();
     if app_settings.get().replay_path.is_empty() {
         console_log("Replay path is empty.");
         return;
@@ -268,14 +268,7 @@ pub fn ScanDirectory() -> impl IntoView {
                 </label>
             </div>
         </div>
-        <Show when=move || {
-            !backend_response.get().meta.success && backend_response.get().meta.is_complete
-        }>
-            <div role="alert" class="alert alert-error shadow-lg m-1 p-1">
-                <Icon icon=X_CIRCLE weight=IconWeight::Bold prop:class="stroke-current" />
-                <span>{backend_response.get().message.clone()}</span>
-            </div>
-        </Show>
+        <DisplayBackendStatus backend_response />
         <Show when=move || {
             dir_stats_data.total_files().get() > 0
                 && !app_settings.get().arrow_ipc_stats.directory_size > 0
