@@ -17,7 +17,8 @@ pub async fn load_app_settings_from_store<R: tauri::Runtime>(
         .and_then(|v| v.as_str().map(|s| s.to_string()))
         .unwrap_or_default();
 
-    // if the ipc directory do basic scan.
+    // if the ipc directory exists do basic scan.
+    let replay_path = replay_path.trim_end_matches('/').to_string();
     let ipc_path = std::path::Path::new(&replay_path).join("ipcs");
     let arrow_ipc_stats = if ipc_path.exists() && ipc_path.is_dir() {
         let replay_path_cp = replay_path.clone();
