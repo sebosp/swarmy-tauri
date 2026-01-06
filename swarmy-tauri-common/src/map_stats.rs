@@ -6,8 +6,6 @@ use serde::{Deserialize, Serialize};
 /// versions, tests, etc.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MapStats {
-    /// The size of the IPC files
-    pub directory_size: u64,
     /// The time of modification of the details IPC file.
     pub date_modified: std::time::SystemTime,
     /// The number of games
@@ -25,7 +23,6 @@ pub struct MapStats {
 impl Default for MapStats {
     fn default() -> Self {
         Self {
-            directory_size: 0,
             date_modified: std::time::SystemTime::UNIX_EPOCH,
             min_date: chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),
             max_date: chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap(),

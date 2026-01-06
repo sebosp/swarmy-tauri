@@ -49,7 +49,6 @@ fn trigger_fetch_query_map_stats(
                     meta: ResponseMeta::incomplete(),
                     message: format!("Error fetching map stats: {:?}", e),
                 };
-                return;
             }
             Ok(response) => {
                 *set_backend_response.write() = response.clone();

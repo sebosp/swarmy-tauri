@@ -8,6 +8,8 @@ pub mod snapshot_stats;
 pub use snapshot_stats::*;
 pub mod map_stats;
 pub use map_stats::*;
+pub mod dataframe;
+pub use dataframe::*;
 
 pub const DETAILS_IPC: &str = "details.ipc";
 pub const INIT_DATA_IPC: &str = "init_data.ipc";

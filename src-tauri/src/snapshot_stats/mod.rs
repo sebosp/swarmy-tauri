@@ -69,21 +69,9 @@ pub fn try_get_snapshot_metadata(replay_path: String) -> Result<SnapshotStats, S
         ])
         .collect()?;
 
-    let min_date_str = res
-        .column("min_date")?
-        .str()?
-        .get(0)
-        .unwrap_or("1970-01-01");
-    let max_date_str = res
-        .column("max_date")?
-        .str()?
-        .get(0)
-        .unwrap_or("1970-01-01");
+    let min_date = col_ymd_to_naive_date(&res, "min_date")?;
+    let max_date = col_ymd_to_naive_date(&res, "max_date")?;
     let num_games = res.column("num_games")?.u64()?.get(0).unwrap_or(0) + 1;
-    let min_date = chrono::NaiveDate::parse_from_str(min_date_str, "%Y-%m-%d")
-        .unwrap_or(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
-    let max_date = chrono::NaiveDate::parse_from_str(max_date_str, "%Y-%m-%d")
-        .unwrap_or(chrono::NaiveDate::from_ymd_opt(1970, 1, 1).unwrap());
     // let data_str = crate::common::convert_df_to_json_data(&res)?;
 
     Ok(SnapshotStats {
