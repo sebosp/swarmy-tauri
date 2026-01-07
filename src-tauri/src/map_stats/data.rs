@@ -7,7 +7,12 @@ pub fn try_query_map_stats(
     replay_path: String,
     query: MapStatsQuery,
 ) -> Result<MapStats, SwarmyTauriError> {
-    let replay_path = format!("{}ipcs", replay_path.trim_end_matches('/').to_string(),);
+    if replay_path.is_empty() {
+        return Err(SwarmyTauriError::Other(
+            "Replay path is not set, please set it in Scan tab.".to_string(),
+        ));
+    }
+    let replay_path = format!("{}/ipcs", replay_path.trim_end_matches('/'),);
 
     log::info!(
         "Querying map stats from replay path: {} for map_title: {} and player_name: {}",
