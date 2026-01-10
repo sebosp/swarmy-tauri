@@ -3,6 +3,7 @@ pub mod scan;
 pub mod map_stats;
 pub mod common;
 pub use common::*;
+pub mod components;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
