@@ -1,8 +1,11 @@
 //! Some dataframe related utilities.
+#[cfg(not(target_arch = "wasm32"))]
 use polars::prelude::*;
 
+#[cfg(not(target_arch = "wasm32"))]
 use crate::SwarmyTauriError;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn col_ymd_to_naive_date(
     df: &DataFrame,
     col_name: &str,
