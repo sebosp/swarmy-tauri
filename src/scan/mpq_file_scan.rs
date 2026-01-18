@@ -1,7 +1,7 @@
-use reactive_stores::Store;
-use leptos::prelude::*;
 use super::*;
+use leptos::prelude::*;
 use reactive_graph::traits::Read;
+use reactive_stores::Store;
 
 #[component]
 pub fn ReplayScanTable(dir_stats_data: Store<SC2ReplaysDirStatsTable>) -> impl IntoView {

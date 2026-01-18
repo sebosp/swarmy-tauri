@@ -111,30 +111,6 @@ pub fn trigger_basic_scan_replay_path(
     });
 }
 
-fn fetch_get_current_app_config(
-    set_arrow_ipc_stats: WriteSignal<SnapshotStats>,
-    set_app_settings: WriteSignal<AppSettings>,
-    set_optimize_button_enabled: WriteSignal<bool>,
-
-) {
-    spawn_local(async move {
-        // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-        match serde_wasm_bindgen::from_value::<AppSettings>(
-            invoke_without_args("get_current_app_config").await,
-        ) {
-            Ok(config) => {
-                console_log(&format!("Loaded app config: {:?}", config));
-                *set_arrow_ipc_stats.write() = config.arrow_ipc_stats.clone();
-                *set_app_settings.write() = config;
-            }
-            Err(e) => {
-                console_log(&format!("Error invoking get_current_app_config: {:?}", e));
-            }
-        }
-        set_optimize_button_enabled.set(true);
-    });
-}
-
 #[component]
 pub fn ScanDirectory() -> impl IntoView {
     let (app_settings, set_app_settings) = signal(AppSettings::default());
@@ -146,7 +122,7 @@ pub fn ScanDirectory() -> impl IntoView {
     });
     let (arrow_ipc_stats, set_arrow_ipc_stats) = signal(SnapshotStats::default());
 
-    fetch_get_current_app_config(set_arrow_ipc_stats, set_app_settings, set_optimize_button_enabled);
+    crate::config::fetch_get_current_app_config(set_arrow_ipc_stats, set_app_settings, set_optimize_button_enabled);
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
         set_optimize_button_enabled.set(!v.is_empty());
@@ -157,8 +133,8 @@ pub fn ScanDirectory() -> impl IntoView {
     let dir_stats_data = Store::new(SC2ReplaysDirStatsTable::from(SC2ReplaysDirStats::default()));
 
     view! {
-        <div class="grid grid-cols-8 grid-rows-1 gap-1">
-            <div class="col-span-5">
+        <div class="grid grid-cols-10 gap-1">
+            <div class="col-span-6">
                 <label class="input input-sm w-full">
                     <span class="label">"Path"</span>
                     <input
@@ -170,7 +146,7 @@ pub fn ScanDirectory() -> impl IntoView {
                     />
                 </label>
             </div>
-            <div class="col-span-2 justify-start">
+            <div class="col-span-3 justify-start">
                 <button
                     class=move || {
                         if !app_settings.get().replay_path.is_empty() {
@@ -267,29 +243,34 @@ pub fn ScanDirectory() -> impl IntoView {
                     />
                 </label>
             </div>
+            <DisplayBackendStatus backend_response />
+            <div class="col-span-10">
+                <Show when=move || {
+                    dir_stats_data.total_files().get() > 0
+                        && !app_settings.get().arrow_ipc_stats.directory_size > 0
+                }>
+                    <div role="alert" class="alert alert-warning alert-soft m-1 p-1">
+                        <Icon icon=FOLDERS weight=IconWeight::Bold prop:class="stroke-current" />
+                        <span>
+                            "Directory is not optimized, click on Optimize to generate the optimized snapshot, this may take a while. "
+                            "A subdirectory named "<b>
+                                <code>"ipc"</code>
+                            </b>" will be created in the chosen folder with the optimized snapshot."
+                        </span>
+                    </div>
+                    <ReplayScanTable dir_stats_data />
+                </Show>
+                <Show when=move || {
+                    optimize_button_enabled.get()
+                        && app_settings.get().arrow_ipc_stats.directory_size > 0
+                }>
+                    <div role="alert" class="alert alert-success alert-soft m-1 p-1">
+                        <Icon icon=DATABASE weight=IconWeight::Bold prop:class="stroke-current" />
+                        <span>"Directory is optimized."</span>
+                    </div>
+                    <ArrowIpcStats arrow_ipc_stats />
+                </Show>
+            </div>
         </div>
-        <DisplayBackendStatus backend_response />
-        <Show when=move || {
-            dir_stats_data.total_files().get() > 0
-                && !app_settings.get().arrow_ipc_stats.directory_size > 0
-        }>
-            <div role="alert" class="alert alert-warning alert-soft m-1 p-1">
-                <Icon icon=FOLDERS weight=IconWeight::Bold prop:class="stroke-current" />
-                <span>
-                    "Directory is not optimized, click on Optimize to generate the optimized snapshot, this may take a while. "
-                    "A subdirectory named "<b>
-                        <code>"ipc"</code>
-                    </b>" will be created in the chosen folder with the optimized snapshot."
-                </span>
-            </div>
-            <ReplayScanTable dir_stats_data />
-        </Show>
-        <Show when=move || { app_settings.get().arrow_ipc_stats.directory_size > 0 }>
-            <div role="alert" class="alert alert-success alert-soft m-1 p-1">
-                <Icon icon=DATABASE weight=IconWeight::Bold prop:class="stroke-current" />
-                <span>"Directory is optimized."</span>
-            </div>
-            <ArrowIpcStats arrow_ipc_stats />
-        </Show>
     }
 }

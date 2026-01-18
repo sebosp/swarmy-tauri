@@ -119,7 +119,7 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
                     </div>
                     <div class="stat-title">"Snapshot size"</div>
                     <div class="stat-value text-primary">
-                        {move || bibytes2(arrow_ipc_stats.get().directory_size as u32)}
+                        {move || bibytes2(arrow_ipc_stats.get().directory_size as f64)}
                     </div>
                     <div class="stat-desc">
                         <code>"ipcs/"</code>
