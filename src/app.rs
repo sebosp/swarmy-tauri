@@ -10,16 +10,25 @@ pub fn Main() -> impl IntoView {
     let active_page = RwSignal::new("Stats By Map".to_string());
 
     view! {
-        <div class="flex w-screen h-screen bg-gray-800 rounded">
+        <div id="swarmy-tauri-window" class="flex w-screen h-screen bg-gray-800 rounded">
             <LeftSideBarMenu active_page=active_page />
-            <div class="flex grow w-full h-full overflow-hidden text-gray-400 bg-gray-900 rounded">
+            <div
+                id="swarmy-tauri-content"
+                class="flex grow w-full h-full overflow-auto text-gray-400 bg-gray-900 rounded"
+            >
                 <Show when=move || active_page.get() == "Scan">
-                    <div class="flex flex-col grow p-2 rounded">
+                    <div
+                        id="swarmy-tauri-scan-directory-content"
+                        class="flex flex-col grow p-2 rounded"
+                    >
                         <ScanDirectory />
                     </div>
                 </Show>
                 <Show when=move || active_page.get() == "Stats By Map">
-                    <div class="flex flex-col grow p-2 rounded">
+                    <div
+                        id="swarmy-tauri-stats-by-map-content"
+                        class="flex flex-col grow p-2 rounded"
+                    >
                         <StatsByMap />
                     </div>
                 </Show>
