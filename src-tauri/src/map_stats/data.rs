@@ -6,7 +6,7 @@ use swarmy_tauri_common::*;
 pub fn try_query_map_stats(
     replay_path: String,
     query: MapStatsQuery,
-) -> Result<MapStats, SwarmyTauriError> {
+) -> Result<Vec<MapStats>, SwarmyTauriError> {
     if replay_path.is_empty() {
         return Err(SwarmyTauriError::Other(
             "Replay path is not set, please set it in Scan tab.".to_string(),
@@ -26,8 +26,6 @@ pub fn try_query_map_stats(
             "Directory not Optimized yet, go to Scan first.".to_string(),
         ));
     }
-    let details_ipc_filename = format!("{}/{}", replay_path, DETAILS_IPC);
-    let date_modified = std::fs::metadata(details_ipc_filename)?.modified()?;
     let mut details_query = LazyFrame::scan_ipc(
         PlPath::new(&format!("{}/{}", replay_path, DETAILS_IPC)),
         Default::default(),
@@ -35,7 +33,7 @@ pub fn try_query_map_stats(
     )?;
 
     if !query.map_title.is_empty() {
-        details_query = details_query.filter(col("map_title").eq(lit(query.map_title)));
+        details_query = details_query.filter(col("title").eq(lit(query.map_title)));
     }
     if !query.player_name.is_empty() {
         details_query = details_query.filter(
@@ -45,12 +43,7 @@ pub fn try_query_map_stats(
         );
     }
     let res = details_query
-        .group_by([
-            col("ext_datetime"),
-            col("ext_fs_id"),
-            col("title"),
-            col("cache_handles"),
-        ])
+        .group_by([col("title"), col("cache_handles")])
         .agg([
             col("ext_datetime")
                 .min()
@@ -62,31 +55,58 @@ pub fn try_query_map_stats(
                 .dt()
                 .to_string("%Y-%m-%d")
                 .alias("max_date"),
-            col("title")
-                .unique()
-                .dt()
-                .to_string("%Y-%m-%d")
-                .alias("max_date"),
-            col("ext_fs_id").count().alias("num_games"),
         ])
+        .with_column(col("cache_handles").str().len_chars().alias("num_games"))
+        .sort(
+            ["num_games"],
+            SortMultipleOptions::default()
+                .with_order_descending(true)
+                .with_nulls_last(true),
+        )
+        .limit(10)
         .collect()?;
-    let min_date = col_ymd_to_naive_date(&res, "min_date")?;
-    let max_date = col_ymd_to_naive_date(&res, "max_date")?;
-    let title = res
+    println!("{res}");
+    let res: Vec<MapStats> = (0..res.height())
+        .map(|idx| extract_map_stats_from_df_row(&res.slice(idx as i64, 1)))
+        .collect::<Result<_, _>>()?;
+    Ok(res)
+}
+
+fn extract_map_stats_from_df_row(row: &DataFrame) -> Result<MapStats, SwarmyTauriError> {
+    let min_date = col_ymd_to_naive_date(row, "min_date")?;
+    let max_date = col_ymd_to_naive_date(row, "max_date")?;
+    let title = row
         .column("title")?
         .str()?
         .get(0)
-        .unwrap_or("Unknown Map")
+        .unwrap_or("Empty Title")
         .to_string();
-    let cache_handles = res
+    let cache_handles = row
         .column("cache_handles")?
         .str()?
         .get(0)
         .unwrap_or("")
         .to_string();
-    let num_games = res.column("num_games")?.u64()?.get(0).unwrap_or(0) + 1;
+    let num_games = row.column("num_games")?.u32()?.get(0).unwrap_or(0);
+    // The cache_handles have start information for the:
+    // - "s2ma" filetype
+    // - 2 letter region, i.e. US, EU, KR, etc.
+    // - then the file hash, not sure this is unique across regions.
+    /*❯ echo "73326d6100004555"|xxd -r -ps
+    s2maEU⏎
+
+    ❯ echo "73326d6100005553"|xxd -r -ps
+    s2maUS⏎
+
+    ❯ echo "73326d6100004b52"|xxd -r -ps
+    s2maKR⏎
+
+    ❯ echo "73326d6100004b52"|xxd -r -ps|xxd
+    00000000: 7332 6d61 0000 4b52                      s2ma..KR
+    */
+    println!("Title: {}", title);
+    println!("Cache handles: {}", cache_handles);
     Ok(MapStats {
-        date_modified,
         max_date,
         min_date,
         num_games,
