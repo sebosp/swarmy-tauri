@@ -105,8 +105,8 @@ fn try_optimize_replay_path(
     let versioned_abilities = read_balance_data_from_json_dir(&path)?;
     // TODO: Move from cli on s2protocol and create a leptos view to configure this.
     let props = WriteArrowIpcProps {
-        scan_max_files: 10000,
-        process_max_files: 10000,
+        scan_max_files: 100000,
+        process_max_files: 100000,
         traverse_max_depth: 8,
         min_version: None,
         max_version: None,
