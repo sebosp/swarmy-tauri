@@ -1,5 +1,3 @@
-
-
 use serde::{Deserialize, Serialize};
 /// Contains metadata information related to the minimun, maximum date of the snapshot taken, the number of
 /// files analyzed, the number of maps and the number of players in the analyzed collection
@@ -12,7 +10,7 @@ pub struct SnapshotStats {
     /// The number of games
     pub num_games: u64,
     /// The number of maps in the snapshot
-    pub num_maps: u32,
+    pub num_maps: u64,
     /// The minimum date of the snapshot taken
     pub min_date: chrono::NaiveDate,
     /// The maximum date of the snapshot taken
