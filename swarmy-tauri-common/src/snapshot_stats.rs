@@ -10,7 +10,7 @@ pub struct SnapshotStats {
     /// The number of games
     pub num_games: u64,
     /// The number of maps in the snapshot
-    pub num_maps: u64,
+    pub num_maps: u32,
     /// The minimum date of the snapshot taken
     pub min_date: chrono::NaiveDate,
     /// The maximum date of the snapshot taken
