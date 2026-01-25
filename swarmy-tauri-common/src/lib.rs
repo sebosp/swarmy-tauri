@@ -9,6 +9,7 @@ pub use snapshot_stats::*;
 pub mod map_stats;
 pub use map_stats::*;
 pub mod dataframe;
+#[cfg(not(target_arch = "wasm32"))]
 pub use dataframe::*;
 
 pub const DETAILS_IPC: &str = "details.ipc";
