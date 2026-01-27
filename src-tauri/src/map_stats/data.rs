@@ -33,7 +33,8 @@ pub fn try_query_map_stats(
     )?;
 
     if !query.map_title.is_empty() {
-        details_query = details_query.filter(col("title").eq(lit(query.map_title)));
+        details_query =
+            details_query.filter(col("title").str().contains(lit(query.map_title), false));
     }
     if !query.player_name.is_empty() {
         details_query = details_query.filter(
@@ -55,15 +56,15 @@ pub fn try_query_map_stats(
                 .dt()
                 .to_string("%Y-%m-%d")
                 .alias("max_date"),
+            len().alias("num_games"),
         ])
-        .with_column(col("cache_handles").str().len_chars().alias("num_games"))
         .sort(
             ["num_games"],
             SortMultipleOptions::default()
                 .with_order_descending(true)
                 .with_nulls_last(true),
         )
-        .limit(10)
+        .limit(1000)
         .collect()?;
     println!("{res}");
     let res: Vec<MapStats> = (0..res.height())
