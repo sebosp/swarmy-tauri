@@ -73,7 +73,7 @@ pub fn try_get_snapshot_metadata(replay_path: String) -> Result<SnapshotStats, S
     let min_date = col_ymd_to_naive_date(&res, "min_date")?;
     let max_date = col_ymd_to_naive_date(&res, "max_date")?;
     let num_games = res.column("num_games")?.u64()?.get(0).unwrap_or(0) + 1;
-    let num_maps = res.column("num_games")?.u64()?.get(0).unwrap_or(0) + 1;
+    let num_maps = res.column("num_maps")?.u32()?.get(0).unwrap_or(0) + 1;
     // let data_str = crate::common::convert_df_to_json_data(&res)?;
 
     Ok(SnapshotStats {
