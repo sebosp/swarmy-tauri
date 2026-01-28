@@ -133,26 +133,27 @@ pub fn ScanDirectory() -> impl IntoView {
     let dir_stats_data = Store::new(SC2ReplaysDirStatsTable::from(SC2ReplaysDirStats::default()));
 
     view! {
-        <div class="grid grid-cols-10 gap-1">
+        <div class="grid grid-cols-10">
             <div class="col-span-6">
-                <label class="input input-sm w-full">
-                    <span class="label">"Path"</span>
-                    <input
-                        class="input input-sm my-0 mx-0"
-                        id="scan-directory-input"
-                        value=move || app_settings.get().replay_path
-                        on:input=tx_update_replay_dir
-                        type="text"
-                    />
+                <label for="scan_path" class="block text-sm/6 font-medium text-white">
+                    Path
                 </label>
+                <input
+                    name="scan_path"
+                    class=text_input_tailwind_classes().join(" ")
+                    id="scan-directory-input"
+                    value=move || app_settings.get().replay_path
+                    on:input=tx_update_replay_dir
+                    type="text"
+                />
             </div>
-            <div class="col-span-3 justify-start">
+            <div class="col-span-3 justify-start ml-6 mt-6">
                 <button
                     class=move || {
                         if !app_settings.get().replay_path.is_empty() {
-                            "btn btn-primary btn-sm m-0"
+                            "btn btn-primary btn-sm"
                         } else {
-                            "btn btn-disabled btn-sm m-0"
+                            "btn btn-disabled btn-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:outline-gray-200"
                         }
                     }
                     on:click=move |ev: MouseEvent| trigger_basic_scan_replay_path(
@@ -178,9 +179,9 @@ pub fn ScanDirectory() -> impl IntoView {
                 <button
                     class=move || {
                         if !app_settings.get().replay_path.is_empty() {
-                            "btn btn-success btn-sm m-0"
+                            "btn btn-success btn-sm"
                         } else {
-                            "btn btn-disabled btn-sm m-0"
+                            "btn btn-disabled btn-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:outline-gray-200"
                         }
                     }
                     on:click=move |ev: MouseEvent| trigger_optimize_replay_path(
@@ -249,14 +250,25 @@ pub fn ScanDirectory() -> impl IntoView {
                     dir_stats_data.total_files().get() > 0
                         && !app_settings.get().arrow_ipc_stats.directory_size > 0
                 }>
-                    <div role="alert" class="alert alert-warning alert-soft m-1 p-1">
-                        <Icon icon=FOLDERS weight=IconWeight::Bold prop:class="stroke-current" />
-                        <span>
-                            "Directory is not optimized, click on Optimize to generate the optimized snapshot, this may take a while. "
-                            "A subdirectory named "<b>
-                                <code>"ipc"</code>
-                            </b>" will be created in the chosen folder with the optimized snapshot."
-                        </span>
+                    <div class="border-l-4 mt-1 p-2 border-yellow-500 bg-yellow-500/10">
+                        <div class="flex">
+                            <div class="shrink-0 text-yellow-500 size-5">
+                                <Icon
+                                    icon=FOLDERS
+                                    weight=IconWeight::Bold
+                                    prop:class="stroke-current"
+                                />
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-300">
+                                    "Directory is not optimized, click on Optimize to generate the optimized snapshot, this may take a while. "
+                                    <br /> "A subdirectory named "<b>
+                                        <code>"ipc"</code>
+                                    </b>
+                                    " will be created in the chosen folder with the optimized snapshot."
+                                </p>
+                            </div>
+                        </div>
                     </div>
                     <ReplayScanTable dir_stats_data />
                 </Show>
@@ -264,9 +276,19 @@ pub fn ScanDirectory() -> impl IntoView {
                     optimize_button_enabled.get()
                         && app_settings.get().arrow_ipc_stats.directory_size > 0
                 }>
-                    <div role="alert" class="alert alert-success alert-soft m-1 p-1">
-                        <Icon icon=DATABASE weight=IconWeight::Bold prop:class="stroke-current" />
-                        <span>"Directory is optimized."</span>
+                    <div class="border-l-4 mt-1 p-2 border-green-500 bg-green-500/10">
+                        <div class="flex">
+                            <div class="shrink-0 text-green-500 size-5">
+                                <Icon
+                                    icon=DATABASE
+                                    weight=IconWeight::Bold
+                                    prop:class="stroke-current"
+                                />
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-green-300">"Directory is optimized."</p>
+                            </div>
+                        </div>
                     </div>
                     <ArrowIpcStats arrow_ipc_stats />
                 </Show>
