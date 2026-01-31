@@ -33,16 +33,28 @@ pub fn try_query_map_stats(
     )?;
 
     if !query.map_title.is_empty() {
-        details_query =
-            details_query.filter(col("title").str().contains(lit(query.map_title), false));
+        details_query = details_query.filter(
+            col("title")
+                .str()
+                .to_lowercase()
+                .str()
+                .contains(lit(query.map_title.to_lowercase()), false),
+        );
     }
     if !query.player_name.is_empty() {
         details_query = details_query.filter(
             col("player_name")
                 .str()
-                .contains(lit(query.player_name), false),
+                .to_lowercase()
+                .str()
+                .contains(lit(query.player_name.to_lowercase()), false),
         );
     }
+    details_query = details_query.unique(
+        Some(Selector::Matches("ext_fs_id".into())),
+        UniqueKeepStrategy::Any,
+    );
+
     let res = details_query
         .group_by([col("title"), col("cache_handles")])
         .agg([
