@@ -5,9 +5,14 @@ use leptos::prelude::*;
 #[component]
 pub fn Config() -> impl IntoView {
     let (disable_parallel_scans, set_disable_parallel_scans) = signal(false);
+    let scan_max_files = RwSignal::new(100000);
+    let process_max_files = RwSignal::new(100000);
+    let traverse_max_depth = RwSignal::new(8);
+    let min_version = RwSignal::new(0);
+    let max_version = RwSignal::new(0);
     view! {
         <div class="ml-4 mt-4">
-            <h2 class="text-base/7 font-semibold text-white">Scan Settings</h2>
+            <h2 class="text-base/7 font-semibold text-white">"Scan Settings"</h2>
             <p class="mt-1 max-w-2xl text-sm/6 text-gray-400">
                 "Configuration for SC2Replays batch processing."
             </p>
@@ -90,6 +95,94 @@ pub fn Config() -> impl IntoView {
                     </div>
                 </fieldset>
             </div>
+            <div class="sm:grid sm:grid-cols-3 sm:items-start sm:gap-4 sm:py-6">
+                <ConfigNumberInput
+                    name="scan_max_files"
+                    label="Maximum number of files to Scan"
+                    description="Limit of the number of files to read, before validating if they are valid/supported."
+                    value=scan_max_files
+                />
+                <ConfigNumberInput
+                    name="process_max_files"
+                    label="Maximum number of files to optimize"
+                    description="Decreases the size of the optimized snapshot."
+                    value=process_max_files
+                />
+                <ConfigNumberInput
+                    name="traverse_max_depth"
+                    label="Maximum Directories to traverse"
+                    description="Limits how deep the scanner will go into sub-directories."
+                    value=traverse_max_depth
+                />
+                <ConfigNumberInput
+                    name="min_version"
+                    label="Minimum protocol patch version to process"
+                    description="Helps skip very old replays that are not relevant or supported. Set to 0 to disable filter."
+                    value=min_version
+                />
+                <ConfigNumberInput
+                    name="max_version"
+                    label="Maximum protocol patch version to process"
+                    description="Helps skip new replays that may be considered corrupt/unsupported. Set to 0 to disable filter."
+                    value=max_version
+                />
+            </div>
+        </div>
+    }
+}
+
+#[component]
+pub fn ConfigNumberInput(
+    name: &'static str,
+    label: &'static str,
+    description: &'static str,
+    value: RwSignal<i32>,
+) -> impl IntoView {
+    let (is_invalid_number, set_is_invalid_number) = signal(false);
+    view! {
+        <label class="block text-sm/6 font-medium text-white sm:pt-1.5">{label}</label>
+        <div class="mt-2 sm:col-span-2 sm:mt-0">
+            <input
+                type="text"
+                aria-invalid=move || if is_invalid_number.get() { "true" } else { "false" }
+                aria-describedby=move || format!("{}-description", name)
+                class=move || {
+                    if is_invalid_number.get() {
+                        "col-start-1 row-start-1 block w-full rounded-md bg-white/5 py-1.5 pr-10 pl-3 text-red-400 outline-1 -outline-offset-1 outline-red-500/50 placeholder:text-red-400/70 focus:outline-2 focus:-outline-offset-2 focus:outline-red-400 sm:pr-9 sm:text-sm/6"
+                    } else {
+                        "block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:max-w-xs sm:text-sm/6"
+                    }
+                }
+                on:input=move |ev| {
+                    let input_value = event_target_value(&ev);
+                    if let Ok(parsed_value) = input_value.parse::<i32>() {
+                        value.set(parsed_value);
+                        set_is_invalid_number.set(false);
+                    } else {
+                        set_is_invalid_number.set(true);
+                    }
+                }
+                value=move || value.get().to_string()
+            />
+
+            <p
+                id=move || format!("{}-description", name)
+                class=move || {
+                    if is_invalid_number.get() {
+                        "mt-2 text-sm text-red-400"
+                    } else {
+                        "mt-2 text-sm/6 text-gray-400"
+                    }
+                }
+            >
+                {move || {
+                    if is_invalid_number.get() {
+                        "Please enter a valid number ".to_string()
+                    } else {
+                        description.to_string()
+                    }
+                }}
+            </p>
         </div>
     }
 }
