@@ -1,6 +1,6 @@
 use leptos::ev::MouseEvent;
 use leptos::prelude::*;
-use phosphor_leptos::{Icon, IconData, IconWeight, BARCODE, HOUSE, MAP_TRIFOLD};
+use phosphor_leptos::{Icon, IconData, IconWeight, BARCODE, FADERS, HOUSE, MAP_TRIFOLD};
 
 #[component]
 pub fn LeftSideBarMenu(active_page: RwSignal<String>) -> impl IntoView {
@@ -34,25 +34,7 @@ pub fn LeftSideBarMenu(active_page: RwSignal<String>) -> impl IntoView {
                 <SidebarMenuItem name="Stats By Map" active_page=active_page />
             </div>
             <div class="flex flex-col items-center mt-2 border-t border-purple-700">
-                <a
-                    class="flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-gray-700 hover:text-gray-300"
-                    href="#"
-                >
-                    <svg
-                        class="w-6 h-6 stroke-current"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                        />
-                    </svg>
-                </a>
+                <SidebarMenuItem name="Config" active_page=active_page />
                 <a
                     class="relative flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-gray-700 hover:text-gray-300"
                     href="#"
@@ -85,10 +67,12 @@ fn SidebarMenuItem(name: &'static str, active_page: RwSignal<String>) -> impl In
     let inactive_icon_class = "flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-gray-700 hover:text-gray-300";
     let house_icon_data: IconData = HOUSE;
     let barcode_icon_data: IconData = BARCODE;
+    let faders_icon_data: IconData = FADERS;
     let map_trifold_icon_data: IconData = MAP_TRIFOLD;
     let icon_data = match name {
         "Home" => house_icon_data,
         "Scan" => barcode_icon_data,
+        "Config" => faders_icon_data,
         "Stats By Map" => map_trifold_icon_data,
         _ => house_icon_data,
     };
