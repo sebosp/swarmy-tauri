@@ -6,7 +6,7 @@ use leptos::ev::MouseEvent;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use phosphor_leptos::{Icon, IconWeight, BARCODE, CPU, DATABASE, FOLDERS, HOURGLASS};
+use phosphor_leptos::{BARCODE, DATABASE, FOLDERS, HOURGLASS, Icon, IconWeight, SHIPPING_CONTAINER};
 use reactive_graph::traits::Write;
 use reactive_stores::{Patch, Store};
 use s2protocol::SC2ReplaysDirStats;
@@ -115,7 +115,6 @@ pub fn trigger_basic_scan_replay_path(
 pub fn ScanDirectory() -> impl IntoView {
     let (app_settings, set_app_settings) = signal(AppSettings::default());
     let (optimize_button_enabled, set_optimize_button_enabled) = signal(false);
-    let (disable_parallel_scans, set_disable_parallel_scans) = signal(false);
     let (backend_response, set_backend_response) = signal(ApiResponse {
         meta: ResponseMeta::incomplete(),
         message: String::new(),
@@ -134,7 +133,7 @@ pub fn ScanDirectory() -> impl IntoView {
 
     view! {
         <div class="grid grid-cols-10">
-            <div class="col-span-6">
+            <div class="col-span-5 pl-1">
                 <label for="scan_path" class="block text-sm/6 font-medium text-white">
                     Path
                 </label>
@@ -147,7 +146,7 @@ pub fn ScanDirectory() -> impl IntoView {
                     type="text"
                 />
             </div>
-            <div class="col-span-3 justify-start ml-6 mt-6">
+            <div class="col-span-5 justify-start ml-6 mt-6">
                 <button
                     class=move || {
                         if !app_settings.get().replay_path.is_empty() {
@@ -179,7 +178,7 @@ pub fn ScanDirectory() -> impl IntoView {
                 <button
                     class=move || {
                         if !app_settings.get().replay_path.is_empty() {
-                            "btn btn-success btn-sm"
+                            "btn btn-accent btn-sm"
                         } else {
                             "btn btn-disabled btn-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:outline-gray-200"
                         }
@@ -204,45 +203,38 @@ pub fn ScanDirectory() -> impl IntoView {
                         }
                     }}
                 </button>
-            </div>
-            <div class="col-span-1 flex justify-end">
-                <label
-                    class="btn btn-sm btn-circle swap swap-rotate"
-                    title=move || {
-                        if disable_parallel_scans.get() {
-                            "Enable Parallel Processing"
+                <button
+                    class=move || {
+                        if !app_settings.get().replay_path.is_empty() {
+                            "btn btn-info btn-sm"
                         } else {
-                            "Disable Parallel Processing"
+                            "btn btn-disabled btn-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:outline-gray-200"
                         }
                     }
+                    on:click=move |ev: MouseEvent| trigger_optimize_replay_path(
+                        ev,
+                        app_settings,
+                        set_optimize_button_enabled,
+                        set_backend_response,
+                    )
+                    disabled=move || !optimize_button_enabled.get()
+                    title="Downloads the caches from Starcraft II servers that contain map information such as Height Map"
                 >
-                    <input
-                        type="checkbox"
-                        checked=move || disable_parallel_scans.get()
-                        on:click=move |_| {
-                            set_disable_parallel_scans.set(!disable_parallel_scans.get())
-                        }
-                    />
                     <Icon
-                        icon=CPU
-                        weight=IconWeight::Bold
-                        prop:title=move || {
-                            if disable_parallel_scans.get() {
-                                "Parallel Processing Disabled"
-                            } else {
-                                "Parallel Processing Enabled"
-                            }
-                        }
-                        prop:class=move || {
-                            if disable_parallel_scans.get() {
-                                "swap-on fill-current"
-                            } else {
-                                "swap-off fill-current"
-                            }
-                        }
-                        color=move || if disable_parallel_scans.get() { "orange" } else { "green" }
+                        icon=SHIPPING_CONTAINER
+                        weight=IconWeight::Light
+                        prop:class="stroke-current"
                     />
-                </label>
+                    {move || {
+                        if !app_settings.get().replay_path.is_empty()
+                            && !optimize_button_enabled.get()
+                        {
+                            "Downloading Caches..."
+                        } else {
+                            "Download Caches"
+                        }
+                    }}
+                </button>
             </div>
             <DisplayBackendStatus backend_response />
             <div class="col-span-10">
@@ -276,7 +268,7 @@ pub fn ScanDirectory() -> impl IntoView {
                     optimize_button_enabled.get()
                         && app_settings.get().arrow_ipc_stats.directory_size > 0
                 }>
-                    <div class="border-l-4 mt-1 p-2 border-green-500 bg-green-500/10">
+                    <div class="ml-4 border-l-4 my-2 p-2 border-green-500 bg-green-500/10">
                         <div class="flex">
                             <div class="shrink-0 text-green-500 size-5">
                                 <Icon
@@ -285,7 +277,7 @@ pub fn ScanDirectory() -> impl IntoView {
                                     prop:class="stroke-current"
                                 />
                             </div>
-                            <div class="ml-3">
+                            <div>
                                 <p class="text-sm text-green-300">"Directory is optimized."</p>
                             </div>
                         </div>
