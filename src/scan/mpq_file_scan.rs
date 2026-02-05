@@ -52,7 +52,9 @@ pub fn ReplayScanTable(dir_stats_data: Store<SC2ReplaysDirStatsTable>) -> impl I
                     <tbody>
                         <For
                             each=move || dir_stats_data.top_10_players()
-                            key=|row| row.read().name.clone()
+                            key=|row| {
+                                format!("{}:{}", row.read().name.clone(), row.read().clan.clone())
+                            }
                             children=|child| {
                                 let idx = child.clone().idx();
                                 let clan = child.clone().clan().clone();
