@@ -2,7 +2,8 @@ use chrono::DateTime;
 use chrono::{NaiveDateTime, Utc};
 use leptos::prelude::*;
 use phosphor_leptos::{
-    Icon, IconWeight, BOXING_GLOVE, CALENDAR_DOT, CALENDAR_STAR, CIRCUITRY, HARD_DRIVE,
+    Icon, IconWeight, IconWeightData, BOXING_GLOVE, CALENDAR_DOT, CALENDAR_STAR, CIRCUITRY,
+    HARD_DRIVE,
 };
 use si_scale::helpers::bibytes2;
 use std::time::UNIX_EPOCH;
@@ -45,6 +46,40 @@ pub fn time_ago(date: NaiveDateTime) -> String {
 }
 
 #[component]
+pub fn StatDescriptionItem(
+    name: String,
+    value: ReadSignal<String>,
+    description: ReadSignal<String>,
+    icon: &'static IconWeightData,
+) -> impl IntoView {
+    view! {
+        <div class="relative overflow-hidden rounded-lg px-4 pt-5 pb-5 shadow-sm sm:px-6 sm:pt-6 bg-gray-800/75 inset-ring inset-ring-white/10">
+            <dt>
+                <div class="absolute rounded-md bg-indigo-500 p-3">
+                    <Icon
+                        icon=icon
+                        weight=IconWeight::Bold
+                        size="24px"
+                        prop:fill="none"
+                        prop:stroke="currentColor"
+                        prop:stroke-width="1.5"
+                        prop:data-slot="icon"
+                        prop:aria-hidden="true"
+                        prop:class="size-6 text-white"
+                    />
+                </div>
+                <p class="ml-16 truncate text-sm font-medium text-gray-400">{name}</p>
+            </dt>
+            <dd class="ml-16 flex pb-2 sm:pb-3">
+                <p class="text-2xl font-semibold text-white" title=description>
+                    {value}
+                </p>
+            </dd>
+        </div>
+    }
+}
+
+#[component]
 pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoView {
     let (modif_dt, _set_modif_dt) = signal(
         DateTime::from_timestamp(
@@ -58,130 +93,77 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
         )
         .unwrap_or_default(),
     );
+    let (rel_modif_dt, _set_rel_modif_dt) = signal(time_ago(modif_dt.get().naive_utc()));
+    let (abs_modif_dt, _set_abs_modif_dt) =
+        signal(modif_dt.get().format("%Y-%m-%d %H:%M:%S %Z").to_string());
+    let (num_games, _set_num_games) = signal(arrow_ipc_stats.get().num_games.to_string());
+    let (processed_description, _set_processed_description) = signal("SC2Replay files".to_string());
+    let (snapshot_size, _set_snapshot_size) =
+        signal(bibytes2(arrow_ipc_stats.get().directory_size as f64));
+    let (snapshot_size_description, _set_snapshot_size_description) =
+        signal("ipcs/ directory".to_string());
+    let (num_maps_value, _set_num_maps_value) = signal(arrow_ipc_stats.get().num_maps.to_string());
+    let (num_maps_description, _set_num_maps_description) = signal("unique maps".to_string());
+    let (snapshot_min_date, _set_snapshot_min_date) = signal(
+        arrow_ipc_stats
+            .get()
+            .min_date
+            .format("%Y-%m-%d")
+            .to_string(),
+    );
+    let (snapshot_min_date_description, _set_snapshot_min_date_description) =
+        signal("Minimum replay date".to_string());
+    let (snapshot_max_date, _set_snapshot_max_date) = signal(
+        arrow_ipc_stats
+            .get()
+            .max_date
+            .format("%Y-%m-%d")
+            .to_string(),
+    );
+    let (snapshot_max_date_description, _set_snapshot_max_date_description) =
+        signal("Maximum replay date".to_string());
     view! {
-        <div class="grid grid-cols-1">
-            <div class="col-span-1">
-                <p class="flex justify-center text-sky-400">"Snapshot statistics"</p>
-            </div>
-        </div>
-        <div class="grid grid-cols-7">
-            <div class="col-span-3 stats">
-                <div class="stat shadow">
-                    <div class="stat-figure text-primary">
-                        <Icon
-                            icon=CALENDAR_STAR
-                            weight=IconWeight::Bold
-                            size="24px"
-                            prop:class="stroke-current"
-                        />
-                    </div>
-                    <div class="stat-title">"Optimized"</div>
-                    <div
-                        class="stat-value text-primary"
-                        title=move || modif_dt.get().format("%H:%M:%S %Z").to_string()
-                    >
-                        {move || time_ago(modif_dt.get().naive_utc())}
-                    </div>
-                    <div class="stat-desc">
-                        {move || modif_dt.get().format("%Y-%m-%d %H:%M:%S %Z").to_string()}
-                    </div>
-                </div>
-            </div>
-            <div class="col-span-1"></div>
-            <div class="col-span-3 stats">
-                <div class="stat shadow">
-                    <div class="stat-figure text-primary">
-                        <Icon
-                            icon=BOXING_GLOVE
-                            weight=IconWeight::Bold
-                            size="24px"
-                            prop:class="stroke-current"
-                        />
-                    </div>
-                    <div class="stat-title">"Processed"</div>
-                    <div class="stat-value text-primary">
-                        {move || arrow_ipc_stats.get().num_games}
-                    </div>
-                    <div class="stat-desc">"SC2Replay files"</div>
-                </div>
-            </div>
-        </div>
-        <div class="grid grid-cols-7">
-            <div class="col-span-3 stats">
-                <div class="stat shadow">
-                    <div class="stat-figure text-primary">
-                        <Icon
-                            icon=HARD_DRIVE
-                            weight=IconWeight::Bold
-                            size="24px"
-                            prop:class="stroke-current"
-                        />
-                    </div>
-                    <div class="stat-title">"Snapshot size"</div>
-                    <div class="stat-value text-primary">
-                        {move || bibytes2(arrow_ipc_stats.get().directory_size as f64)}
-                    </div>
-                    <div class="stat-desc">
-                        <code>"ipcs/"</code>
-                        " directory"
-                    </div>
-                </div>
-            </div>
-            <div class="col-span-1"></div>
-            <div class="col-span-3 stats">
-                <div class="stat shadow">
-                    <div class="stat-figure text-primary">
-                        <Icon
-                            icon=CIRCUITRY
-                            weight=IconWeight::Bold
-                            size="24px"
-                            prop:class="stroke-current"
-                        />
-                    </div>
-                    <div class="stat-title">"maps"</div>
-                    <div class="stat-value text-primary">
-                        {move || arrow_ipc_stats.get().num_maps}
-                    </div>
-                    <div class="stat-desc">"(unique maps)"</div>
-                </div>
-            </div>
-        </div>
-        <div class="grid grid-cols-7">
-            <div class="col-span-3 stats">
-                <div class="stat shadow">
-                    <div class="stat-figure text-primary">
-                        <Icon
-                            icon=CALENDAR_DOT
-                            weight=IconWeight::Bold
-                            size="24px"
-                            prop:class="stroke-current"
-                        />
-                    </div>
-                    <div class="stat-title">"From:"</div>
-                    <div class="stat-value text-primary">
-                        {move || arrow_ipc_stats.get().min_date.format("%Y-%m-%d").to_string()}
-                    </div>
-                    <div class="stat-desc">"Minimum replay time"</div>
-                </div>
-            </div>
-            <div class="col-span-1"></div>
-            <div class="col-span-3 stats">
-                <div class="stat shadow">
-                    <div class="stat-figure text-primary">
-                        <Icon
-                            icon=CALENDAR_DOT
-                            weight=IconWeight::Bold
-                            size="24px"
-                            prop:class="stroke-current"
-                        />
-                    </div>
-                    <div class="stat-title">"To:"</div>
-                    <div class="stat-value text-primary">
-                        {move || arrow_ipc_stats.get().max_date.format("%Y-%m-%d").to_string()}
-                    </div>
-                    <div class="stat-desc">"Maximum replay time"</div>
-                </div>
-            </div>
+        <div>
+            <h3 class="text-base font-semibold text-white ml-2">Snapshot Stastics</h3>
+
+            <dl class="px-5 mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <StatDescriptionItem
+                    name="Optimized".to_string()
+                    value=rel_modif_dt
+                    description=abs_modif_dt
+                    icon=CALENDAR_STAR
+                />
+                <StatDescriptionItem
+                    name="Processed".to_string()
+                    value=num_games
+                    description=processed_description
+                    icon=BOXING_GLOVE
+                />
+                <StatDescriptionItem
+                    name="Snapshot Size".to_string()
+                    value=snapshot_size
+                    description=snapshot_size_description
+                    icon=HARD_DRIVE
+                />
+                <StatDescriptionItem
+                    name="Maps".to_string()
+                    value=num_maps_value
+                    description=num_maps_description
+                    icon=CIRCUITRY
+                />
+                <StatDescriptionItem
+                    name="From:".to_string()
+                    value=snapshot_min_date
+                    description=snapshot_min_date_description
+                    icon=CALENDAR_DOT
+                />
+                <StatDescriptionItem
+                    name="To:".to_string()
+                    value=snapshot_max_date
+                    description=snapshot_max_date_description
+                    icon=CALENDAR_DOT
+                />
+            </dl>
         </div>
     }
 }
