@@ -12,10 +12,7 @@ pub fn Config() -> impl IntoView {
     let max_version = RwSignal::new(0);
     view! {
         <div class="ml-4 mt-4">
-            <h2 class="text-base/7 font-semibold text-white">"Scan Settings"</h2>
-            <p class="mt-1 max-w-2xl text-sm/6 text-gray-400">
-                "Configuration for SC2Replays batch processing."
-            </p>
+            <h2 class="text-base/7 font-semibold text-white">"Swarmy Settings"</h2>
 
             <div class="mt-6 space-y-10 border-b border-white/10 pb-12 sm:space-y-0 sm:divide-y sm:divide-white/10 sm:border-t sm:border-t-white/10 sm:pb-0">
                 <fieldset>
