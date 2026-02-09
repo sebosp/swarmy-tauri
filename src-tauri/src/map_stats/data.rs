@@ -1,5 +1,6 @@
 //! Dataframe for map statistics.
 
+use crate::data::*;
 use polars::prelude::*;
 use swarmy_tauri_common::*;
 
@@ -7,27 +8,18 @@ pub fn try_query_map_stats(
     replay_path: String,
     query: MapStatsQuery,
 ) -> Result<Vec<MapStats>, SwarmyTauriError> {
-    if replay_path.is_empty() {
-        return Err(SwarmyTauriError::Other(
-            "Replay path is not set, please set it in Scan tab.".to_string(),
-        ));
-    }
-    let replay_path = format!("{}/ipcs", replay_path.trim_end_matches('/'),);
+    let replay_path = sanitize_replay_path(&replay_path)?;
+    let ipc_path = build_ipc_path(&replay_path)?;
 
     log::info!(
         "Querying map stats from replay path: {} for map_title: {} and player_name: {}",
-        replay_path,
+        ipc_path,
         query.map_title,
         query.player_name
     );
-    let ipc_path = std::path::Path::new(&replay_path);
-    if !ipc_path.exists() {
-        return Err(SwarmyTauriError::Other(
-            "Directory not Optimized yet, go to Scan first.".to_string(),
-        ));
-    }
+
     let mut details_query = LazyFrame::scan_ipc(
-        PlPath::new(&format!("{}/{}", replay_path, DETAILS_IPC)),
+        PlPath::new(&format!("{}/{}", ipc_path, DETAILS_IPC)),
         Default::default(),
         Default::default(),
     )?;

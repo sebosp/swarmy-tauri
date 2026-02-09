@@ -10,6 +10,9 @@ pub mod common;
 pub use common::*;
 pub mod map_stats;
 pub use map_stats::*;
+pub mod replay_caches;
+pub use replay_caches::*;
+pub mod data;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -29,6 +32,7 @@ pub fn run() {
             optimize_replay_path,
             get_snapshot_metadata,
             query_map_stats,
+            download_replay_caches,
         ])
         .plugin(tauri_plugin_store::Builder::default().build())
         .run(tauri::generate_context!())
