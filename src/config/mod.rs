@@ -11,6 +11,7 @@ pub fn fetch_get_current_app_config(
     set_arrow_ipc_stats: WriteSignal<SnapshotStats>,
     set_app_settings: WriteSignal<AppSettings>,
     set_optimize_button_enabled: WriteSignal<bool>,
+    set_download_cache_enabled: WriteSignal<bool>,
 
 ) {
     spawn_local(async move {
@@ -28,5 +29,6 @@ pub fn fetch_get_current_app_config(
             }
         }
         set_optimize_button_enabled.set(true);
+        set_download_cache_enabled.set(true);
     });
 }
