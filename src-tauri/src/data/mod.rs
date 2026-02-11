@@ -1,5 +1,4 @@
 use swarmy_tauri_common::*;
-use std::path::PathBuf;
 
 /// Sanitcizes the replay path, this should be stored locally in the AppConfig.
 pub fn sanitize_replay_path(replay_path: &str) -> Result<String, SwarmyTauriError> {
@@ -8,7 +7,6 @@ pub fn sanitize_replay_path(replay_path: &str) -> Result<String, SwarmyTauriErro
             "Replay path is not set, please set it in Scan tab.".to_string(),
         ));
     }
-    let replay_path = format!("{}/ipcs", replay_path);
     Ok(replay_path.trim_end_matches('/').to_string())
 }
 
@@ -19,7 +17,7 @@ pub fn build_ipc_path(replay_path: &str) -> Result<String, SwarmyTauriError> {
     let ipc_path = std::path::Path::new(&replay_path);
     if !ipc_path.exists() {
         return Err(SwarmyTauriError::Other(
-            "Directory not Optimized yet, go to Scan first.".to_string(),
+            format!("Directory {} not Optimized yet, go to Scan first.", replay_path)
         ));
     }
     Ok(replay_path)
