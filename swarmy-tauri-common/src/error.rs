@@ -72,6 +72,10 @@ enum ErrorKind {
 
     Serde(String),
     SerdeWasmBindgen(String),
+
+    #[cfg(not(target_arch = "wasm32"))]
+    Reqwest(String),
+
     Other(String),
 }
 
@@ -97,6 +101,7 @@ impl serde::Serialize for SwarmyTauriError {
 
             #[cfg(not(target_arch = "wasm32"))]
             Self::Reqwest(_) => ErrorKind::Reqwest(error_message),
+
             Self::Other(_) => ErrorKind::Other(error_message),
         };
         error_kind.serialize(serializer)
