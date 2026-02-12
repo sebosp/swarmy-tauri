@@ -25,6 +25,10 @@ pub enum SwarmyTauriError {
     #[error("Serde Wasm Bindgen Error: {0}")]
     SerdeWasmBindgen(#[from] serde_wasm_bindgen::Error),
 
+    #[cfg(not(target_arch = "wasm32"))]
+    #[error("Reqwest Error: {0}")]
+    Reqwest(#[from] reqwest::Error),
+
     #[error("Other Error: {0}")]
     Other(String),
 }
@@ -44,6 +48,9 @@ impl From<SwarmyTauriError> for String {
             SwarmyTauriError::Utf8(e) => format!("UTF8 Error: {}", e),
             SwarmyTauriError::SerdeJson(e) => format!("Serde Error: {}", e),
             SwarmyTauriError::SerdeWasmBindgen(e) => format!("Serde Wasm Bindgen Error: {}", e),
+
+            #[cfg(not(target_arch = "wasm32"))]
+            SwarmyTauriError::Reqwest(e) => format!("Reqwest Error: {}", e),
             SwarmyTauriError::Other(e) => format!("Other Error: {}", e),
         }
     }
@@ -87,6 +94,9 @@ impl serde::Serialize for SwarmyTauriError {
 
             Self::SerdeJson(_) => ErrorKind::Serde(error_message),
             Self::SerdeWasmBindgen(_) => ErrorKind::SerdeWasmBindgen(error_message),
+
+            #[cfg(not(target_arch = "wasm32"))]
+            Self::Reqwest(_) => ErrorKind::Reqwest(error_message),
             Self::Other(_) => ErrorKind::Other(error_message),
         };
         error_kind.serialize(serializer)

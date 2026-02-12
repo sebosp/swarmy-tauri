@@ -23,3 +23,4 @@ polars = { version = "0.52.0", features = [
   "top_k",
   "dtype-full",
 ] }
+reqwest = "0.13"

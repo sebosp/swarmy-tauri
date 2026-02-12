@@ -30,7 +30,8 @@ tauri-plugin-persisted-scope = "2"
 tauri-plugin-store = "2"
 s2protocol = { workspace = true }
 swarmy-tauri-common = { path = "../swarmy-tauri-common" }
-chrono = "0.4.42"
+chrono = "0.4.43"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 polars = { version = "0.52.0", default-features = false }
+reqwest = "0.13"
