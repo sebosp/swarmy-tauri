@@ -15,12 +15,10 @@ use super::mpq_file_scan::ReplayScanTable;
 use super::arrow_ipc_stats::ArrowIpcStats;
 
 pub fn trigger_optimize_replay_path(
-    ev: MouseEvent,
     app_settings: ReadSignal<AppSettings>,
     set_optimize_button_enabled: WriteSignal<bool>,
     set_backend_response: WriteSignal<ApiResponse>,
 ) {
-    ev.prevent_default();
     // Reset backend response status.
     *set_backend_response.write() = ApiResponse::new_incomplete();
 
@@ -48,11 +46,9 @@ pub fn trigger_optimize_replay_path(
                     console_log(&format!("Optimize replay path failed: {:?}", res.message));
                 }
                 set_backend_response.set(res);
-                set_optimize_button_enabled.set(true);
             }
             Err(e) => {
                 console_log(&format!("Error invoking optimize_replay_path: {:?}", e));
-                set_optimize_button_enabled.set(true);
                 set_backend_response.set(ApiResponse {
                     meta: ResponseMeta {
                         success: false,
@@ -63,6 +59,56 @@ pub fn trigger_optimize_replay_path(
                 });
             }
         }
+        set_optimize_button_enabled.set(true);
+    });
+}
+
+pub fn trigger_download_replay_caches(
+    app_settings: ReadSignal<AppSettings>,
+    set_download_caches_button_enabled: WriteSignal<bool>,
+    set_backend_response: WriteSignal<ApiResponse>,
+) {
+    // Reset backend response status.
+    *set_backend_response.write() = ApiResponse::new_incomplete();
+
+    if app_settings.get_untracked().replay_path.is_empty() {
+        console_log("Replay path is empty.");
+        return;
+    }
+    set_download_caches_button_enabled.set(false);
+
+    let app_settings_cp = app_settings.get_untracked();
+    spawn_local(async move {
+        let args = serde_wasm_bindgen::to_value(&app_settings_cp).unwrap();
+        console_log(&format!(
+            "Invoking download_replay_caches with args: {:?}",
+            args
+        ));
+        // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+        let response = invoke("download_replay_caches", args).await;
+        console_log(&format!("download_replay_caches response: {:?}", response));
+        match serde_wasm_bindgen::from_value::<ApiResponse>(response) {
+            Ok(res) => {
+                if res.meta.success {
+                    console_log("Download replay caches succeeded.");
+                } else {
+                    console_log(&format!("Download replay caches failed: {:?}", res.message));
+                }
+                set_backend_response.set(res);
+            }
+            Err(e) => {
+                console_log(&format!("Error invoking download_replay_caches: {:?}", e));
+                set_backend_response.set(ApiResponse {
+                    meta: ResponseMeta {
+                        success: false,
+                        duration_ms: 0,
+                        is_complete: true,
+                    },
+                    message: format!("Error invoking download_replay_caches: {:?}", e),
+                });
+            }
+        }
+        set_download_caches_button_enabled.set(true);
     });
 }
 
@@ -115,13 +161,14 @@ pub fn trigger_basic_scan_replay_path(
 pub fn ScanDirectory() -> impl IntoView {
     let (app_settings, set_app_settings) = signal(AppSettings::default());
     let (optimize_button_enabled, set_optimize_button_enabled) = signal(false);
+    let (download_caches_button_enabled, set_download_caches_button_enabled) = signal(false);
     let (backend_response, set_backend_response) = signal(ApiResponse {
         meta: ResponseMeta::incomplete(),
         message: String::new(),
     });
     let (arrow_ipc_stats, set_arrow_ipc_stats) = signal(SnapshotStats::default());
 
-    crate::config::fetch_get_current_app_config(set_arrow_ipc_stats, set_app_settings, set_optimize_button_enabled);
+    crate::config::fetch_get_current_app_config(set_arrow_ipc_stats, set_app_settings, set_optimize_button_enabled, set_download_caches_button_enabled);
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
         set_optimize_button_enabled.set(!v.is_empty());
@@ -183,8 +230,7 @@ pub fn ScanDirectory() -> impl IntoView {
                             "btn btn-disabled btn-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:outline-gray-200"
                         }
                     }
-                    on:click=move |ev: MouseEvent| trigger_optimize_replay_path(
-                        ev,
+                    on:click=move |_| trigger_optimize_replay_path(
                         app_settings,
                         set_optimize_button_enabled,
                         set_backend_response,
@@ -211,13 +257,12 @@ pub fn ScanDirectory() -> impl IntoView {
                             "btn btn-disabled btn-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:outline-gray-200"
                         }
                     }
-                    on:click=move |ev: MouseEvent| trigger_optimize_replay_path(
-                        ev,
+                    on:click=move |_| trigger_download_replay_caches(
                         app_settings,
-                        set_optimize_button_enabled,
+                        set_download_caches_button_enabled,
                         set_backend_response,
                     )
-                    disabled=move || !optimize_button_enabled.get()
+                    disabled=move || !download_caches_button_enabled.get()
                     title="Downloads the caches from Starcraft II servers that contain map information such as Height Map"
                 >
                     <Icon
@@ -227,7 +272,7 @@ pub fn ScanDirectory() -> impl IntoView {
                     />
                     {move || {
                         if !app_settings.get().replay_path.is_empty()
-                            && !optimize_button_enabled.get()
+                            && !download_caches_button_enabled.get()
                         {
                             "Downloading Caches..."
                         } else {
