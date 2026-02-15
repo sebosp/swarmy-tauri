@@ -18,6 +18,7 @@ reactive_graph = "0.2"
 phosphor-leptos = "0.8.0"
 swarmy-tauri-common = { path = "swarmy-tauri-common" }
 s2protocol = { workspace = true }
+tracing = { workspace = true }
 si-scale = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
 
@@ -28,6 +29,7 @@ members = ["src-tauri", "swarmy-tauri-common"]
 s2protocol = { version = "3.5.1", default-features = false, features = [
     "dep_arrow",
 ] }
+tracing = "0.1.44"
 
 [profile.dev]
 incremental = true
