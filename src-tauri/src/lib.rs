@@ -14,8 +14,8 @@ pub mod replay_caches;
 pub use replay_caches::*;
 pub mod data;
 pub mod majordomo;
+use tracing::info;
 
-use std::sync::Mutex;
 use tauri::async_runtime::spawn;
 use tauri::{AppHandle, Manager, State};
 use tokio::sync::mpsc;
@@ -23,21 +23,32 @@ use tokio::sync::mpsc;
 use crate::majordomo::AsyncTask;
 
 #[derive(Debug)]
-struct SetupState {
+pub struct SetupState {
     majordomo_tx: mpsc::Sender<AsyncTask>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let (majordomo_tx, majordomo_rx) = mpsc::channel(4_096); // TODO: Magic number removal
-    let majordomo_tx_clone = majordomo_tx.clone();
     tauri::Builder::default()
-        .manage(Mutex::new(SetupState { majordomo_tx }))
+        .manage(SetupState { majordomo_tx })
+        .setup(|app| {
+            log::info!("Starting Tauri application setup");
+            // Spawn setup as a non-blocking task so the windows can be
+            // created and ran while it executes
+            spawn(setup(majordomo_rx, app.handle().clone()));
+            log::info!("Setup function called");
+            // The hook expects an Ok result
+            Ok(())
+        })
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_persisted_scope::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(tauri_plugin_log::log::LevelFilter::Info)
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Stdout,
+                ))
                 .build(),
         )
         .plugin(tauri_plugin_dialog::init())
@@ -51,27 +62,13 @@ pub fn run() {
             download_replay_caches,
         ])
         .plugin(tauri_plugin_store::Builder::default().build())
-        .setup(|app| {
-            // Spawn setup as a non-blocking task so the windows can be
-            // created and ran while it executes
-            spawn(setup(
-                majordomo_tx_clone,
-                majordomo_rx,
-                app.handle().clone(),
-            ));
-            // The hook expects an Ok result
-            Ok(())
-        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 // An async function that does some heavy setup task
-async fn setup(
-    tx: mpsc::Sender<AsyncTask>,
-    rx: mpsc::Receiver<AsyncTask>,
-    app: AppHandle,
-) -> Result<(), ()> {
-    majordomo::MajordomoCoordinator::init_coordinator_thread(tx, rx, app);
+async fn setup(rx: mpsc::Receiver<AsyncTask>, app: AppHandle) -> Result<(), ()> {
+    info!("Starting setup task");
+    let _ = majordomo::MajordomoCoordinator::init_coordinator_thread(rx, app);
     Ok(())
 }
