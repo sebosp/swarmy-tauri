@@ -1,5 +1,8 @@
 use thiserror::Error;
 
+#[cfg(not(target_arch = "wasm32"))]
+use tokio::task::JoinError;
+
 #[derive(Error, Debug)]
 pub enum SwarmyTauriError {
     #[cfg(not(target_arch = "wasm32"))]
@@ -29,6 +32,10 @@ pub enum SwarmyTauriError {
     #[error("Reqwest Error: {0}")]
     Reqwest(#[from] reqwest::Error),
 
+    #[cfg(not(target_arch = "wasm32"))]
+    #[error("Tokio JoinError: {0}")]
+    TokioJoin(#[from] JoinError),
+
     #[error("Other Error: {0}")]
     Other(String),
 }
@@ -51,6 +58,8 @@ impl From<SwarmyTauriError> for String {
 
             #[cfg(not(target_arch = "wasm32"))]
             SwarmyTauriError::Reqwest(e) => format!("Reqwest Error: {}", e),
+            #[cfg(not(target_arch = "wasm32"))]
+            SwarmyTauriError::TokioJoin(e) => format!("Tokio JoinError: {}", e),
             SwarmyTauriError::Other(e) => format!("Other Error: {}", e),
         }
     }
@@ -75,6 +84,9 @@ enum ErrorKind {
 
     #[cfg(not(target_arch = "wasm32"))]
     Reqwest(String),
+
+    #[cfg(not(target_arch = "wasm32"))]
+    TokioJoin(String),
 
     Other(String),
 }
@@ -101,6 +113,9 @@ impl serde::Serialize for SwarmyTauriError {
 
             #[cfg(not(target_arch = "wasm32"))]
             Self::Reqwest(_) => ErrorKind::Reqwest(error_message),
+
+            #[cfg(not(target_arch = "wasm32"))]
+            Self::TokioJoin(_) => ErrorKind::TokioJoin(error_message),
 
             Self::Other(_) => ErrorKind::Other(error_message),
         };
