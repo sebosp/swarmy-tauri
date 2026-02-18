@@ -53,9 +53,9 @@ pub fn StatDescriptionItem(
     icon: &'static IconWeightData,
 ) -> impl IntoView {
     view! {
-        <div class="relative overflow-hidden rounded-lg px-4 pt-5 pb-5 shadow-sm sm:px-6 sm:pt-6 bg-gray-800/75 inset-ring inset-ring-white/10">
+        <div class="relative overflow-hidden rounded-lg px-4 pt-4 pb-4 shadow-sm sm:px-3 sm:pt-3 bg-gray-800/75 inset-ring inset-ring-white/10">
             <dt>
-                <div class="absolute rounded-md bg-indigo-500 p-3">
+                <div class="absolute rounded-md bg-indigo-500 p-2">
                     <Icon
                         icon=icon
                         weight=IconWeight::Bold
@@ -70,7 +70,7 @@ pub fn StatDescriptionItem(
                 </div>
                 <p class="ml-16 truncate text-sm font-medium text-gray-400">{name}</p>
             </dt>
-            <dd class="ml-16 flex pb-2 sm:pb-3">
+            <dd class="ml-16 flex">
                 <p class="text-2xl font-semibold text-white" title=description>
                     {value}
                 </p>
@@ -126,7 +126,7 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
         <div>
             <h3 class="text-base font-semibold text-white ml-2">Snapshot Stastics</h3>
 
-            <dl class="px-5 mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <dl class="px-5 mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <StatDescriptionItem
                     name="Optimized".to_string()
                     value=rel_modif_dt
