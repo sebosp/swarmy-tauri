@@ -1,6 +1,6 @@
 //! Swarmy Tauri UI - SC2Replay Directory Scan and Export to Arrow IPC Module
 
-use crate::settings::load_app_settings_from_store;
+use crate::settings::load_app_settings;
 use s2protocol::arrow_store::ArrowIpcTypes;
 use s2protocol::cli::WriteArrowIpcProps;
 use s2protocol::game_events::read_balance_data_from_json_dir;
@@ -11,13 +11,7 @@ use tauri_plugin_store::StoreBuilder;
 
 #[tauri::command]
 pub async fn get_current_app_config(app_handle: tauri::AppHandle) -> Result<AppSettings, SwarmyTauriError> {
-    let store = StoreBuilder::new(&app_handle, "settings.json")
-        .build()?;
-
-    // If there are no saved settings yet, this will return an error so we ignore the return value.
-    let _ = store.reload();
-
-    load_app_settings_from_store(&store).await
+    load_app_settings(app_handle).await
 }
 
 #[tauri::command(rename_all = "snake_case")]
