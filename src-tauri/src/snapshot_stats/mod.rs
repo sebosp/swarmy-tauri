@@ -32,22 +32,35 @@ pub async fn get_snapshot_metadata(replay_path: String) -> ApiResponse {
 pub fn try_get_snapshot_metadata(replay_path: String) -> Result<SnapshotStats, SwarmyTauriError> {
     // remove trailing slash if exists
     let replay_path = replay_path.trim_end_matches('/').to_string();
-    let replay_path = format!("{}/ipcs/", replay_path);
-    log::info!("Getting snapshot metadata from: {}", replay_path);
+    let ipc_path = format!("{}/ipcs/", replay_path);
+    let file_cache_path = format!("{}/caches/", replay_path);
+    log::info!("Getting snapshot metadata from: {}", ipc_path);
     // Add the size of all the files in state.source_dir
-    let mut directory_size = 0;
-    for entry in std::fs::read_dir(&replay_path)? {
+    let mut ipc_dir_size = 0;
+    for entry in std::fs::read_dir(&ipc_path)? {
         let entry = entry?;
         let path = entry.path();
         let metadata = std::fs::metadata(path)?;
         let size = metadata.len();
-        directory_size += size;
+        ipc_dir_size += size;
+    }
+    let mut caches_size = 0;
+    let mut num_caches = 0;
+    if std::path::Path::new(&file_cache_path).exists() {
+        for entry in std::fs::read_dir(&file_cache_path)? {
+            let entry = entry?;
+            let path = entry.path();
+            let metadata = std::fs::metadata(path)?;
+            let size = metadata.len();
+            caches_size += size;
+            num_caches += 1;
+        }
     }
     // get the date_modified of the details.ipc file
-    let details_ipc_filename = format!("{}/{}", replay_path, DETAILS_IPC);
+    let details_ipc_filename = format!("{}/{}", ipc_path, DETAILS_IPC);
     let date_modified = std::fs::metadata(details_ipc_filename)?.modified()?;
     let details_query = LazyFrame::scan_ipc(
-        PlPath::new(&format!("{}/{}", replay_path, DETAILS_IPC)),
+        PlPath::new(&format!("{}/{}", ipc_path, DETAILS_IPC)),
         Default::default(),
         Default::default(),
     )?;
@@ -77,11 +90,13 @@ pub fn try_get_snapshot_metadata(replay_path: String) -> Result<SnapshotStats, S
     // let data_str = crate::common::convert_df_to_json_data(&res)?;
 
     Ok(SnapshotStats {
-        directory_size,
+        ipc_dir_size,
         date_modified,
         max_date,
         min_date,
         num_games,
         num_maps,
+        num_caches,
+        caches_size,
     })
 }

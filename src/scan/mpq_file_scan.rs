@@ -37,19 +37,39 @@ pub fn ReplayScanTable(dir_stats_data: Store<SC2ReplaysDirStatsTable>) -> impl I
         </div>
         <div class="flex gap-4">
             <div class="flex-item grow">
-                <h2 class="text-neutral-content flex justify-center bg-gray-800">
+                <h2 class="text-neutral-content flex justify-center bg-gray-800 rounded-sm">
                     "Top 10 Players"
                 </h2>
-                <table class="table bg-gray-500 table-xs table-zebra rounded-box">
-                    <thead class="bg-gray-700">
+                <table class="relative divide-white/15">
+                    <thead>
                         <tr>
-                            <th></th>
-                            <th>Clan</th>
-                            <th>Name</th>
-                            <th>Total Games</th>
+                            <th
+                                scope="col"
+                                class="py-3.5 pr-3 pl-4 text-left text-sm font-semibold whitespace-nowrap sm:pl-0 text-white"
+                            >
+                                ""
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-2 py-3.5 text-left text-sm font-semibold whitespace-nowrap text-white"
+                            >
+                                "Clan"
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-2 py-3.5 text-left text-sm font-semibold whitespace-nowrap text-white"
+                            >
+                                "Name"
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-2 py-3.5 text-left text-sm font-semibold whitespace-nowrap text-white"
+                            >
+                                "Games"
+                            </th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-white/10 bg-gray-900">
                         <For
                             each=move || dir_stats_data.top_10_players()
                             key=|row| {
@@ -62,10 +82,18 @@ pub fn ReplayScanTable(dir_stats_data: Store<SC2ReplaysDirStatsTable>) -> impl I
                                 let count = child.clone().count();
                                 view! {
                                     <tr>
-                                        <th>{move || idx.get()}</th>
-                                        <td>{move || clan.get()}</td>
-                                        <td>{move || name.get()}</td>
-                                        <td>{move || count.get()}</td>
+                                        <td class="py-2 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-white">
+                                            {move || idx.get()}
+                                        </td>
+                                        <td class="px-2 py-2 text-sm whitespace-nowrap text-gray-400">
+                                            {move || clan.get()}
+                                        </td>
+                                        <td class="px-2 py-2 text-sm whitespace-nowrap text-gray-400">
+                                            {move || name.get()}
+                                        </td>
+                                        <td class="px-2 py-2 text-sm whitespace-nowrap text-gray-400">
+                                            {move || count.get()}
+                                        </td>
                                     </tr>
                                 }
                             }
@@ -74,13 +102,30 @@ pub fn ReplayScanTable(dir_stats_data: Store<SC2ReplaysDirStatsTable>) -> impl I
                 </table>
             </div>
             <div class="flex-item grow">
-                <h2 class="text-neutral-content flex justify-center bg-gray-800">"Top 10 Maps"</h2>
-                <table class="table bg-gray-500 table-xs table-zebra rounded-box">
-                    <thead class="bg-gray-700">
+                <h2 class="text-neutral-content flex justify-center bg-gray-800 rounded-sm">
+                    "Top 10 Maps"
+                </h2>
+                <table class="relative divide-white/15">
+                    <thead>
                         <tr>
-                            <th></th>
-                            <th>Map Title</th>
-                            <th>Total Games</th>
+                            <th
+                                scope="col"
+                                class="py-3.5 pr-3 pl-4 text-left text-sm font-semibold whitespace-nowrap sm:pl-0 text-white"
+                            >
+                                ""
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-2 py-3.5 text-left text-sm font-semibold whitespace-nowrap text-white"
+                            >
+                                "Map Title"
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-2 py-3.5 text-left text-sm font-semibold whitespace-nowrap text-white"
+                            >
+                                "Games"
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,9 +138,15 @@ pub fn ReplayScanTable(dir_stats_data: Store<SC2ReplaysDirStatsTable>) -> impl I
                                 let count = child.clone().count();
                                 view! {
                                     <tr>
-                                        <th>{move || idx.get()}</th>
-                                        <td>{move || title.get()}</td>
-                                        <td>{move || count.get()}</td>
+                                        <td class="py-2 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-white">
+                                            {move || idx.get()}
+                                        </td>
+                                        <td class="px-2 py-2 text-sm whitespace-nowrap text-gray-400">
+                                            {move || title.get()}
+                                        </td>
+                                        <td class="px-2 py-2 text-sm whitespace-nowrap text-gray-400">
+                                            {move || count.get()}
+                                        </td>
                                     </tr>
                                 }
                             }

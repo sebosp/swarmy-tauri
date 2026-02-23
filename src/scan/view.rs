@@ -285,7 +285,7 @@ pub fn ScanDirectory() -> impl IntoView {
             <div class="col-span-10">
                 <Show when=move || {
                     dir_stats_data.total_files().get() > 0
-                        && !app_settings.get().arrow_ipc_stats.directory_size > 0
+                        && !app_settings.get().arrow_ipc_stats.ipc_dir_size > 0
                 }>
                     <div class="border-l-4 mt-1 p-2 border-yellow-500 bg-yellow-500/10">
                         <div class="flex">
@@ -298,11 +298,10 @@ pub fn ScanDirectory() -> impl IntoView {
                             </div>
                             <div class="ml-3">
                                 <p class="text-sm text-yellow-300">
-                                    "Directory is not optimized, click on Optimize to generate the optimized snapshot, this may take a while. "
-                                    <br /> "A subdirectory named "<b>
-                                        <code>"ipc"</code>
+                                    "Directory is not optimized, click on Optimize to generate the snapshot in subdirectory "
+                                    <b>
+                                        <code>"ipcs"</code>
                                     </b>
-                                    " will be created in the chosen folder with the optimized snapshot."
                                 </p>
                             </div>
                         </div>
@@ -311,7 +310,7 @@ pub fn ScanDirectory() -> impl IntoView {
                 </Show>
                 <Show when=move || {
                     optimize_button_enabled.get()
-                        && app_settings.get().arrow_ipc_stats.directory_size > 0
+                        && app_settings.get().arrow_ipc_stats.ipc_dir_size > 0
                 }>
                     <div class="ml-4 border-l-4 my-2 p-2 border-green-500 bg-green-500/10">
                         <div class="flex">
