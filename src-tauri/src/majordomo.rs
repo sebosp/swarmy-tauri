@@ -2,7 +2,7 @@
 ///
 use tokio::{runtime::Handle, sync::oneshot};
 use tokio::sync::mpsc;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use tracing::{info, instrument};
 use swarmy_tauri_common::SwarmyTauriError;
 use crate::try_download_replay_caches;
