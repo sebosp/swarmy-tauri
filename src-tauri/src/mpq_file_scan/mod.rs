@@ -10,7 +10,9 @@ use swarmy_tauri_common::*;
 use tauri_plugin_store::StoreBuilder;
 
 #[tauri::command]
-pub async fn get_current_app_config(app_handle: tauri::AppHandle) -> Result<AppSettings, SwarmyTauriError> {
+pub async fn get_current_app_config(
+    app_handle: tauri::AppHandle,
+) -> Result<AppSettings, SwarmyTauriError> {
     load_app_settings(app_handle).await
 }
 
@@ -62,22 +64,23 @@ pub async fn optimize_replay_path(
     // create a thread to scan the directory in the background:
     let t = std::thread::spawn(move || {
         let init_time = std::time::Instant::now();
-        match try_optimize_replay_path(replay_path, disable_parallel_scans)
-        {
+        match try_optimize_replay_path(replay_path, disable_parallel_scans) {
             Ok(val) => ApiResponse::new(
-            ResponseMetaBuilder::new(true)
-                .duration_ms(init_time.elapsed().as_millis() as u64)
-                .build(),
-            val,
-        ),
+                ResponseMetaBuilder::new(true)
+                    .duration_ms(init_time.elapsed().as_millis() as u64)
+                    .build(),
+                val,
+            ),
             Err(e) => {
-            log::error!("Error optimizing replays: {}", e);
-        ApiResponse::new(
-            ResponseMetaBuilder::new(true)
-                .duration_ms(init_time.elapsed().as_millis() as u64)
-                .build(),
-            format!("Error optimizing replays: {:?}", e))
-        }}
+                log::error!("Error optimizing replays: {}", e);
+                ApiResponse::new(
+                    ResponseMetaBuilder::new(true)
+                        .duration_ms(init_time.elapsed().as_millis() as u64)
+                        .build(),
+                    format!("Error optimizing replays: {:?}", e),
+                )
+            }
+        }
     });
     t.join().unwrap()
 }

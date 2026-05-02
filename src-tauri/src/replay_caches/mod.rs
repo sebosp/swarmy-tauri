@@ -61,20 +61,21 @@ pub async fn try_download_replay_caches(
         destination.display()
     );
     let res = tokio::task::spawn_blocking(move || {
-    let details_query = LazyFrame::scan_ipc(
-        PlPath::new(&format!("{}/{}", ipc_path, DETAILS_IPC)),
-        Default::default(),
-        Default::default(),
-    )?;
-    log::info!("Loaded details.ipc, extracting unique cache handles...");
-    details_query
-        .unique(
-            Some(Selector::Matches("cache_handles".into())),
-            UniqueKeepStrategy::Any,
-        )
-        .limit(1000)
-        .collect()
-    }).await??;
+        let details_query = LazyFrame::scan_ipc(
+            PlRefPath::new(&format!("{}/{}", ipc_path, DETAILS_IPC)),
+            Default::default(),
+            Default::default(),
+        )?;
+        log::info!("Loaded details.ipc, extracting unique cache handles...");
+        details_query
+            .unique(
+                Some(Selector::Matches("cache_handles".into())),
+                UniqueKeepStrategy::Any,
+            )
+            .limit(1000)
+            .collect()
+    })
+    .await??;
     // TODO: Maybe we don't need the cache region or s2ma format...
     let mut unique_cache_handles: Vec<String> = vec![];
     log::info!("Extracting unique cache handles from details.ipc...");

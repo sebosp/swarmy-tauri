@@ -60,7 +60,7 @@ pub fn try_get_snapshot_metadata(replay_path: String) -> Result<SnapshotStats, S
     let details_ipc_filename = format!("{}/{}", ipc_path, DETAILS_IPC);
     let date_modified = std::fs::metadata(details_ipc_filename)?.modified()?;
     let details_query = LazyFrame::scan_ipc(
-        PlPath::new(&format!("{}/{}", ipc_path, DETAILS_IPC)),
+        PlRefPath::new(&format!("{}/{}", ipc_path, DETAILS_IPC)),
         Default::default(),
         Default::default(),
     )?;

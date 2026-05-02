@@ -1,11 +1,11 @@
+use crate::try_download_replay_caches;
+use swarmy_tauri_common::SwarmyTauriError;
+use tauri::AppHandle;
+use tokio::sync::mpsc;
 /// A Tokio MPSC Majorodomo inspeired by ZMQ.
 ///
 use tokio::{runtime::Handle, sync::oneshot};
-use tokio::sync::mpsc;
-use tauri::AppHandle;
 use tracing::{info, instrument};
-use swarmy_tauri_common::SwarmyTauriError;
-use crate::try_download_replay_caches;
 
 #[derive(Debug)]
 pub enum AsyncTask {
@@ -18,20 +18,18 @@ pub enum AsyncTask {
 pub struct MajordomoCoordinator {
     rx: mpsc::Receiver<AsyncTask>,
     app_handle: AppHandle,
-    
 }
 impl MajordomoCoordinator {
     /// Creates a new instance of the MajordomoCoordinator
     pub async fn new(
         main_rx: mpsc::Receiver<AsyncTask>,
-    app: AppHandle,
-) -> Result<Self, SwarmyTauriError> {
+        app: AppHandle,
+    ) -> Result<Self, SwarmyTauriError> {
         Ok(MajordomoCoordinator {
             rx: main_rx,
             app_handle: app,
         })
     }
-
 
     #[instrument]
     pub async fn process_message_queue(&mut self) -> Result<(), SwarmyTauriError> {
@@ -53,10 +51,13 @@ impl MajordomoCoordinator {
                         let result = try_download_replay_caches(app_handle_clone).await;
                         // Handle the result of the download caches function
                         match result {
-                            Ok(_) => info!("majordomo coordinator: Download caches completed successfully"),
-                            Err(e) => info!("majordomo coordinator: Error downloading caches: {:?}", e),
+                            Ok(_) => info!(
+                                "majordomo coordinator: Download caches completed successfully"
+                            ),
+                            Err(e) => {
+                                info!("majordomo coordinator: Error downloading caches: {:?}", e)
+                            }
                         }
-                        
                     });
                     res_tx.send(()).unwrap();
                 }
@@ -76,10 +77,9 @@ impl MajordomoCoordinator {
             .name("Majordomo Coordinator I/O".to_owned())
             .spawn(move || {
                 current_tokio_handle.spawn(async move {
-                    let mut majordomo_coordinator =
-                        Self::new( main_rx, app)
-                            .await
-                            .expect("Unable to create Majordomo Coordinator");
+                    let mut majordomo_coordinator = Self::new(main_rx, app)
+                        .await
+                        .expect("Unable to create Majordomo Coordinator");
                     majordomo_coordinator
                         .process_message_queue()
                         .await

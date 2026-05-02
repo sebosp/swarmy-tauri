@@ -19,7 +19,7 @@ pub fn try_query_map_stats(
     );
 
     let mut details_query = LazyFrame::scan_ipc(
-        PlPath::new(&format!("{}/{}", ipc_path, DETAILS_IPC)),
+        PlRefPath::new(&format!("{}/{}", ipc_path, DETAILS_IPC)),
         Default::default(),
         Default::default(),
     )?;

@@ -16,9 +16,10 @@ pub fn build_ipc_path(replay_path: &str) -> Result<String, SwarmyTauriError> {
     let replay_path = format!("{}/ipcs", replay_path);
     let ipc_path = std::path::Path::new(&replay_path);
     if !ipc_path.exists() {
-        return Err(SwarmyTauriError::Other(
-            format!("Directory {} not Optimized yet, go to Scan first.", replay_path)
-        ));
+        return Err(SwarmyTauriError::Other(format!(
+            "Directory {} not Optimized yet, go to Scan first.",
+            replay_path
+        )));
     }
     Ok(replay_path)
 }
