@@ -17,7 +17,7 @@ pub mod majordomo;
 use tracing::info;
 
 use tauri::async_runtime::spawn;
-use tauri::{AppHandle, Manager, State};
+use tauri::AppHandle;
 use tokio::sync::mpsc;
 
 use crate::majordomo::AsyncTask;

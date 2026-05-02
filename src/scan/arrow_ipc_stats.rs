@@ -99,7 +99,7 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
     let (num_games, _set_num_games) = signal(arrow_ipc_stats.get().num_games.to_string());
     let (processed_description, _set_processed_description) = signal("SC2Replay files".to_string());
     let (snapshot_size, _set_snapshot_size) =
-        signal(bibytes2(arrow_ipc_stats.get().directory_size as f64));
+        signal(bibytes2(arrow_ipc_stats.get().ipc_dir_size as f64));
     let (snapshot_size_description, _set_snapshot_size_description) =
         signal("ipcs/ directory".to_string());
     let (num_maps_value, _set_num_maps_value) = signal(arrow_ipc_stats.get().num_maps.to_string());

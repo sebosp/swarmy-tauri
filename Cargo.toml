@@ -26,7 +26,7 @@ chrono = { version = "0.4", features = ["serde"] }
 members = ["src-tauri", "swarmy-tauri-common"]
 
 [workspace.dependencies]
-s2protocol = { version = "3.5.1", default-features = false, features = [
+s2protocol = { version = "3.5.3", default-features = false, features = [
     "dep_arrow",
 ] }
 tracing = "0.1.44"

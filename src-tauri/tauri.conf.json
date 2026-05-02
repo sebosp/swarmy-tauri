@@ -15,7 +15,8 @@
       {
         "title": "swarmy",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "alwaysOnBottom": true
       }
     ],
     "security": {

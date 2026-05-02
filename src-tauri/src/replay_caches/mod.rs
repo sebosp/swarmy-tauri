@@ -103,6 +103,9 @@ pub async fn try_download_replay_caches(
         if let Err(e) = download_cache(handle, &destination).await {
             log::error!("Error downloading cache {}: {}", handle, e);
         }
+        if let Err(e) = download_cache(handle, &destination).await {
+            log::error!("Error downloading cache {}: {}", handle, e);
+        }
     }
     Ok(String::from("Download caches finished successfully."))
 }
