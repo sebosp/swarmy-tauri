@@ -5,8 +5,17 @@
 ## Dependencies
 Tauri requirement plus tailwindcss and daisyui
 ```
-cd ~/swarmy-tauri;
-npm install daisyui
+$ curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v4.2.4/tailwindcss-linux-x64
+$ vim README.md
+$ chmod a+x tailwindcss-linux-x64
+$ mv tailwindcss-linux-x64 tailwindcss
+$ mv tailwindcss ~/local/bin/
+$ curl -sLO https://github.com/dobicinaitis/tailwind-cli-extra/releases/download/v2.8.3/tailwindcss-extra-linux-x64
+$ chmod a+x tailwindcss-extra-linux-x64
+$ mv tailwindcss-extra-linux-x64 tailwindcss-extra
+$ mv tailwindcss-extra ~/local/bin/
+$ cd ~/swarmy-tauri;
+$ npm install daisyui
 ```
 
 There's a bit of a strange bug when installing tailwindcss / tailwindcss-extra in Trunk.toml, for some reason installing one tries to

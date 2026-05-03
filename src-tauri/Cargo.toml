@@ -25,7 +25,7 @@ serde_json = "1"
 tauri-plugin-dialog = "2"
 tauri-plugin-log = "2"
 log = "0.4"
-tauri-plugin-fs = "2"
+tauri-plugin-fs = "2.5.1"
 tauri-plugin-persisted-scope = "2"
 tauri-plugin-store = "2"
 s2protocol = { workspace = true }
@@ -38,3 +38,6 @@ polars = { version = "0.53.0", default-features = false }
 reqwest = "0.13"
 tokio = { version = "1", features = ["full"] }
 tracing = { workspace = true }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"

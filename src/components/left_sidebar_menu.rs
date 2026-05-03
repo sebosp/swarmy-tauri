@@ -1,6 +1,6 @@
 use leptos::ev::MouseEvent;
 use leptos::prelude::*;
-use phosphor_leptos::{Icon, IconData, IconWeight, BARCODE, FADERS, HOUSE, MAP_TRIFOLD};
+use phosphor_leptos::{Icon, IconWeight, BARCODE, FADERS, HOUSE, MAP_TRIFOLD};
 
 #[component]
 pub fn LeftSideBarMenu(active_page: RwSignal<String>) -> impl IntoView {
@@ -65,16 +65,12 @@ fn SidebarMenuItem(name: &'static str, active_page: RwSignal<String>) -> impl In
     let active_icon_class =
         "flex items-center justify-center w-12 h-12 mt-2 rounded text-gray-200 bg-gray-700";
     let inactive_icon_class = "flex items-center justify-center w-12 h-12 mt-2 rounded hover:bg-gray-700 hover:text-gray-300";
-    let house_icon_data: IconData = HOUSE;
-    let barcode_icon_data: IconData = BARCODE;
-    let faders_icon_data: IconData = FADERS;
-    let map_trifold_icon_data: IconData = MAP_TRIFOLD;
     let icon_data = match name {
-        "Home" => house_icon_data,
-        "Scan" => barcode_icon_data,
-        "Config" => faders_icon_data,
-        "Stats By Map" => map_trifold_icon_data,
-        _ => house_icon_data,
+        "Home" => HOUSE,
+        "Scan" => BARCODE,
+        "Config" => FADERS,
+        "Stats By Map" => MAP_TRIFOLD,
+        _ => HOUSE,
     };
 
     view! {

@@ -6,5 +6,5 @@ use serde::{Deserialize, Serialize};
 pub struct AppSettings {
     pub disable_parallel_scans: bool,
     pub replay_path: String,
-    pub arrow_ipc_stats: SnapshotStats,
+    pub snapshot_stats: SnapshotStats,
 }

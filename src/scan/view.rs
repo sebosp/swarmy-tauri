@@ -1,18 +1,20 @@
 //! Swarmy Tauri UI - Scan View
 
+use super::arrow_ipc_stats::ArrowIpcStats;
+use super::mpq_file_scan::ReplayScanTable;
 use crate::scan::*;
 use crate::*;
 use leptos::ev::MouseEvent;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
 use leptos::task::spawn_local;
-use phosphor_leptos::{BARCODE, DATABASE, FOLDERS, HOURGLASS, Icon, IconWeight, SHIPPING_CONTAINER};
+use phosphor_leptos::{
+    Icon, IconWeight, BARCODE, DATABASE, FOLDERS, HOURGLASS, SHIPPING_CONTAINER,
+};
 use reactive_graph::traits::Write;
 use reactive_stores::{Patch, Store};
 use s2protocol::SC2ReplaysDirStats;
 use swarmy_tauri_common::*;
-use super::mpq_file_scan::ReplayScanTable;
-use super::arrow_ipc_stats::ArrowIpcStats;
 
 pub fn trigger_optimize_replay_path(
     app_settings: ReadSignal<AppSettings>,
@@ -166,9 +168,14 @@ pub fn ScanDirectory() -> impl IntoView {
         meta: ResponseMeta::incomplete(),
         message: String::new(),
     });
-    let (arrow_ipc_stats, set_arrow_ipc_stats) = signal(SnapshotStats::default());
+    let (snapshot_stats, set_snapshot_stats) = signal(SnapshotStats::default());
 
-    crate::config::fetch_get_current_app_config(set_arrow_ipc_stats, set_app_settings, set_optimize_button_enabled, set_download_caches_button_enabled);
+    crate::config::fetch_get_current_app_config(
+        set_snapshot_stats,
+        set_app_settings,
+        set_optimize_button_enabled,
+        set_download_caches_button_enabled,
+    );
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
         set_optimize_button_enabled.set(!v.is_empty());
@@ -285,49 +292,96 @@ pub fn ScanDirectory() -> impl IntoView {
             <div class="col-span-10">
                 <Show when=move || {
                     dir_stats_data.total_files().get() > 0
-                        && !app_settings.get().arrow_ipc_stats.ipc_dir_size > 0
+                        && app_settings.get().snapshot_stats.ipc_dir_size == 0
                 }>
-                    <div class="border-l-4 mt-1 p-2 border-yellow-500 bg-yellow-500/10">
-                        <div class="flex">
-                            <div class="shrink-0 text-yellow-500 size-5">
-                                <Icon
-                                    icon=FOLDERS
-                                    weight=IconWeight::Bold
-                                    prop:class="stroke-current"
-                                />
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-yellow-300">
-                                    "Directory is not optimized, click on Optimize to generate the snapshot in subdirectory "
-                                    <b>
-                                        <code>"ipcs"</code>
-                                    </b>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <SnapshotStatusHeader app_settings dir_stats_data />
                     <ReplayScanTable dir_stats_data />
                 </Show>
                 <Show when=move || {
                     optimize_button_enabled.get()
-                        && app_settings.get().arrow_ipc_stats.ipc_dir_size > 0
+                        && app_settings.get().snapshot_stats.ipc_dir_size > 0
                 }>
-                    <div class="ml-4 border-l-4 my-2 p-2 border-green-500 bg-green-500/10">
-                        <div class="flex">
-                            <div class="shrink-0 text-green-500 size-5">
-                                <Icon
-                                    icon=DATABASE
-                                    weight=IconWeight::Bold
-                                    prop:class="stroke-current"
-                                />
-                            </div>
-                            <div>
-                                <p class="text-sm text-green-300">"Directory is optimized."</p>
-                            </div>
-                        </div>
-                    </div>
-                    <ArrowIpcStats arrow_ipc_stats />
+                    <SnapshotStatusHeader app_settings dir_stats_data />
+                    <ArrowIpcStats snapshot_stats />
                 </Show>
+            </div>
+        </div>
+    }
+}
+#[component]
+pub fn SnapshotStatusHeader(
+    app_settings: ReadSignal<AppSettings>,
+    dir_stats_data: Store<SC2ReplaysDirStatsTable>,
+) -> impl IntoView {
+    let has_replay_files = move || dir_stats_data.total_files().get() > 0;
+    let has_optimized_snapshot = move || app_settings.get().snapshot_stats.ipc_dir_size > 0;
+    let has_caches_downloaded = move || app_settings.get().snapshot_stats.num_caches > 0;
+    let icon_data = if has_replay_files() && has_optimized_snapshot() {
+        if has_caches_downloaded() {
+            DATABASE
+        } else {
+            SHIPPING_CONTAINER
+        }
+    } else {
+        FOLDERS
+    };
+    console_log(&format!(
+        "has_replay_files {} has_optimized_snapshot {} has_caches_downloaded {}",
+        has_replay_files(),
+        has_optimized_snapshot(),
+        has_caches_downloaded()
+    ));
+    view! {
+        <div class=move || {
+            if has_replay_files() && has_optimized_snapshot() {
+                if has_caches_downloaded() {
+                    "border-l-4 mt-1 p-2 border-green-500 bg-green-500/10"
+                } else {
+                    "border-l-4 mt-1 p-2 border-yellow-500 bg-yellow-500/10"
+                }
+            } else {
+                "border-l-4 mt-1 p-2 border-orange-500 bg-orange-500/10"
+            }
+        }>
+            <div class="flex">
+                <div class=move || {
+                    if has_replay_files() && has_optimized_snapshot() {
+                        if has_caches_downloaded() {
+                            "shrink-0 size-5 text-green-500 bg/text-green-500/10"
+                        } else {
+                            "shrink-0 size-5 text-yellow-500 bg/text-yellow-500/10"
+                        }
+                    } else {
+                        "shrink-0 size-5 text-orange-500 bg/text-orange-500/10"
+                    }
+                }>
+                    <Icon icon=icon_data weight=IconWeight::Bold prop:class="stroke-current" />
+                </div>
+                <div class="ml-3">
+                    <p class=move || {
+                        if has_replay_files() && has_optimized_snapshot() {
+                            if has_caches_downloaded() {
+                                "text-sm text-green-300"
+                            } else {
+                                "text-sm text-yellow-300"
+                            }
+                        } else {
+                            "text-sm text-orange-300"
+                        }
+                    }>
+                        {move || {
+                            if has_replay_files() && has_optimized_snapshot() {
+                                if has_caches_downloaded() {
+                                    "Directory is optimized and replay caches are downloaded"
+                                } else {
+                                    "Directory is optimized. Please click on Download caches button to download map data"
+                                }
+                            } else {
+                                "Directory is not optimized, click on Optimize and then Download Caches"
+                            }
+                        }}
+                    </p>
+                </div>
             </div>
         </div>
     }

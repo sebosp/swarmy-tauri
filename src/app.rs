@@ -8,7 +8,7 @@ use swarmy_tauri_ui::scan::view::ScanDirectory;
 
 #[component]
 pub fn Main() -> impl IntoView {
-    let active_page = RwSignal::new("Config".to_string());
+    let active_page = RwSignal::new("Scan".to_string());
 
     view! {
         <div id="swarmy-tauri-window" class="flex w-screen h-screen bg-gray-800 rounded">

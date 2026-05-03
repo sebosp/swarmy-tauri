@@ -31,6 +31,7 @@ pub struct SetupState {
 pub fn run() {
     let (majordomo_tx, majordomo_rx) = mpsc::channel(4_096); // TODO: Magic number removal
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
         .manage(SetupState { majordomo_tx })
         .setup(|app| {

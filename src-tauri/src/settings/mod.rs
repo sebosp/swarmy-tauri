@@ -41,6 +41,6 @@ pub async fn load_app_settings(
     Ok(AppSettings {
         disable_parallel_scans,
         replay_path,
-        arrow_ipc_stats,
+        snapshot_stats: arrow_ipc_stats,
     })
 }
