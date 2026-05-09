@@ -80,10 +80,10 @@ pub fn StatDescriptionItem(
 }
 
 #[component]
-pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoView {
+pub fn ArrowIpcStats(snapshot_stats: ReadSignal<SnapshotStats>) -> impl IntoView {
     let (modif_dt, _set_modif_dt) = signal(
         DateTime::from_timestamp(
-            arrow_ipc_stats
+            snapshot_stats
                 .get()
                 .date_modified
                 .duration_since(UNIX_EPOCH)
@@ -96,30 +96,20 @@ pub fn ArrowIpcStats(arrow_ipc_stats: ReadSignal<SnapshotStats>) -> impl IntoVie
     let (rel_modif_dt, _set_rel_modif_dt) = signal(time_ago(modif_dt.get().naive_utc()));
     let (abs_modif_dt, _set_abs_modif_dt) =
         signal(modif_dt.get().format("%Y-%m-%d %H:%M:%S %Z").to_string());
-    let (num_games, _set_num_games) = signal(arrow_ipc_stats.get().num_games.to_string());
+    let (num_games, _set_num_games) = signal(snapshot_stats.get().num_games.to_string());
     let (processed_description, _set_processed_description) = signal("SC2Replay files".to_string());
     let (snapshot_size, _set_snapshot_size) =
-        signal(bibytes2(arrow_ipc_stats.get().ipc_dir_size as f64));
+        signal(bibytes2(snapshot_stats.get().ipc_dir_size as f64));
     let (snapshot_size_description, _set_snapshot_size_description) =
         signal("ipcs/ directory".to_string());
-    let (num_maps_value, _set_num_maps_value) = signal(arrow_ipc_stats.get().num_maps.to_string());
+    let (num_maps_value, _set_num_maps_value) = signal(snapshot_stats.get().num_maps.to_string());
     let (num_maps_description, _set_num_maps_description) = signal("unique maps".to_string());
-    let (snapshot_min_date, _set_snapshot_min_date) = signal(
-        arrow_ipc_stats
-            .get()
-            .min_date
-            .format("%Y-%m-%d")
-            .to_string(),
-    );
+    let (snapshot_min_date, _set_snapshot_min_date) =
+        signal(snapshot_stats.get().min_date.format("%Y-%m-%d").to_string());
     let (snapshot_min_date_description, _set_snapshot_min_date_description) =
         signal("Minimum replay date".to_string());
-    let (snapshot_max_date, _set_snapshot_max_date) = signal(
-        arrow_ipc_stats
-            .get()
-            .max_date
-            .format("%Y-%m-%d")
-            .to_string(),
-    );
+    let (snapshot_max_date, _set_snapshot_max_date) =
+        signal(snapshot_stats.get().max_date.format("%Y-%m-%d").to_string());
     let (snapshot_max_date_description, _set_snapshot_max_date_description) =
         signal("Maximum replay date".to_string());
     view! {

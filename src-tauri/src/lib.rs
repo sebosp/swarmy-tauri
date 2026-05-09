@@ -14,7 +14,8 @@ pub mod replay_caches;
 pub use replay_caches::*;
 pub mod data;
 pub mod majordomo;
-use tracing::info;
+use std::process;
+use std::thread;
 
 use tauri::async_runtime::spawn;
 use tauri::AppHandle;
@@ -35,11 +36,19 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .manage(SetupState { majordomo_tx })
         .setup(|app| {
-            log::info!("Starting Tauri application setup");
+            log::info!(
+                "Starting Tauri application setup {}:{:?}",
+                process::id(),
+                thread::current().id()
+            );
             // Spawn setup as a non-blocking task so the windows can be
             // created and ran while it executes
             spawn(setup(majordomo_rx, app.handle().clone()));
-            log::info!("Setup function called");
+            log::info!(
+                "Setup function called on {}:{:?}",
+                process::id(),
+                thread::current().id()
+            );
             // The hook expects an Ok result
             Ok(())
         })
@@ -70,7 +79,11 @@ pub fn run() {
 
 // An async function that does some heavy setup task
 async fn setup(rx: mpsc::Receiver<AsyncTask>, app: AppHandle) -> Result<(), ()> {
-    info!("Starting setup task");
+    log::info!(
+        "Starting majordomo setup task{}:{:?}",
+        process::id(),
+        thread::current().id()
+    );
     let _ = majordomo::MajordomoCoordinator::init_coordinator_thread(rx, app);
     Ok(())
 }
