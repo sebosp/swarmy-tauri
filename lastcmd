@@ -1,0 +1,2 @@
+$ ls git/swarmy-tauri/target/debug/swarmy-tauri | entr -r 'git/swarmy-tauri/target/debug/swarmy-tauri'
+$ ssh -L 0.0.0.0:1420:0.0.0.0:1420 seb@corvid-zt

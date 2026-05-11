@@ -256,7 +256,7 @@ pub fn ScanDirectory() -> impl IntoView {
                         set_backend_response,
                         set_activity_stage,
                     )
-                    disabled=(move || { activity_stage.get() > ActivityStage::ScanDone })()
+                    disabled=move || { activity_stage.get() != ActivityStage::ScanDone }
                     title="Optimize the replay generating Arrow files (may take some time)"
                 >
                     <Icon icon=DATABASE weight=IconWeight::Light prop:class="stroke-current" />

@@ -57,21 +57,42 @@ impl ActivityStage {
         }
     }
 
-    pub fn top_container_class(&self) -> Vec<String> {
-        vec![
-            "border-l-4".to_string(),
-            "mt-1".to_string(),
-            "p-2".to_string(),
-            format!("border-{}-500", self.color()),
-            format!("bg-{}-500/10", self.color()),
-        ]
+    pub fn top_container_class(&self) -> &'static str {
+        match self {
+            Self::None => "border-l-4 mt-1 p-2 border-gray-500 bg-gray-500/10",
+            Self::DirectoryEntered => "border-l-4 mt-1 p-2 border-blue-500 bg-blue-500/10",
+            Self::ScanFailure
+            | ActivityStage::OptimizeFailure
+            | ActivityStage::DownloadingCachesFailure => {
+                "border-l-4 mt-1 p-2 border-red-500 bg-red-500/10"
+            }
+            Self::ScanInit | ActivityStage::OptimizeInit | ActivityStage::DownloadingCachesInit => {
+                "border-l-4 mt-1 p-2 border-teal-500 bg-teal-500/10"
+            }
+            Self::ScanDone | ActivityStage::OptimizeDone | ActivityStage::DownloadingCachesDone => {
+                "border-l-4 mt-1 p-2 border-green-500 bg-green-500/10"
+            }
+        }
     }
     /// The div containing the message about the current stage status.
-    pub fn alert_container_class(&self) -> String {
-        format!(
-            "shrink-0 size-5 text-green-500 bg/text-{}-500/10",
-            self.color()
-        )
+    pub fn alert_container_class(&self) -> &'static str {
+        // TODO: For some reason I can't use format!("ext-{}-500", self.color(), it doesn't seem to
+        // have effect...
+        match self {
+            Self::None => "shrink-0 size-5 text-gray-500 bg/text-gray-500/10",
+            Self::DirectoryEntered => "shrink-0 size-5 text-blue-500 bg/text-blue-500/10",
+            Self::ScanFailure
+            | ActivityStage::OptimizeFailure
+            | ActivityStage::DownloadingCachesFailure => {
+                "shrink-0 size-5 text-red-500 bg/text-red-500/10"
+            }
+            Self::ScanInit | ActivityStage::OptimizeInit | ActivityStage::DownloadingCachesInit => {
+                "shrink-0 size-5 text-teal-500 bg/text-teal-500/10"
+            }
+            Self::ScanDone | ActivityStage::OptimizeDone | ActivityStage::DownloadingCachesDone => {
+                "shrink-0 size-5 text-green-500 bg/text-green-500/10"
+            }
+        }
     }
 
     /// The text class for the current stage status.
