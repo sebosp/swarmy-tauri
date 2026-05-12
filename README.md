@@ -26,3 +26,8 @@ tailwindcss = "2.7.0" # This is actually tailwindcss-extra version
 ```
 Then `trunk build` downloads the tailwindcss-extra plugin version 2.7.0 :shrug:
 And then **sometimes** it works?
+
+# TODO
+
+- Currently only one version can be running at a time because of the settings.json that is written on "scan" tab.
+- "caches" should be stored in a global location to avoid double downloading for different snapshots.

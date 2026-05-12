@@ -1,9 +1,12 @@
 //! Leptos view for map stats.
 
+use super::actions::*;
 use super::*;
 use crate::*;
+use leptos::ev::MouseEvent;
 use leptos::prelude::*;
 use reactive_stores::Store;
+use swarmy_tauri_common::*;
 
 #[component]
 pub fn StatsByMap() -> impl IntoView {
@@ -123,6 +126,7 @@ pub fn MapStatsDataTable(map_stats_store: Store<MapStatsDataTable>) -> impl Into
                                 format!("{}:{}", row.read().title.clone(), row.read().cache_handles)
                             }
                             children=|child| {
+                                let cache_ids: String = child.read().cache_handles.clone();
                                 let handles_count = child
                                     .read()
                                     .cache_handles
@@ -132,7 +136,16 @@ pub fn MapStatsDataTable(map_stats_store: Store<MapStatsDataTable>) -> impl Into
                                 view! {
                                     <tr>
                                         <td class="py-2 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-white">
-                                            {child.read().title.clone()}
+                                            <button
+                                                class="btn btn-primary btn-sm b-0 p-0 m-0"
+                                                on:click=move |ev: MouseEvent| {
+                                                    ev.prevent_default();
+                                                    trigger_swarmy_bevy_exec_on_caches(&cache_ids)
+                                                }
+                                                title="Open in Swarmy-Bevy"
+                                            >
+                                                {child.read().title.clone()}
+                                            </button>
                                         </td>
                                         <td class="px-2 py-2 text-sm whitespace-nowrap text-gray-400">
                                             {child.read().num_games}

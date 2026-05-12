@@ -24,11 +24,9 @@ pub fn ScanDirectory() -> impl IntoView {
     });
     let (snapshot_stats, set_snapshot_stats) = signal(SnapshotStats::default());
 
-    crate::config::fetch_get_current_app_config(
-        set_snapshot_stats,
-        set_app_settings,
-        set_activity_stage,
-    );
+    crate::config::fetch_get_current_app_config(set_app_settings);
+    *set_activity_stage.write() = ActivityStage::from(app_settings.get().clone());
+    *set_snapshot_stats.write() = app_settings.get().snapshot_stats.clone();
     let tx_update_replay_dir = move |ev| {
         let v = event_target_value(&ev);
         if v.is_empty() {

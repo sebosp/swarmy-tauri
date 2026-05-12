@@ -32,8 +32,8 @@ pub async fn get_snapshot_metadata(replay_path: String) -> ApiResponse {
 pub fn try_get_snapshot_metadata(replay_path: String) -> Result<SnapshotStats, SwarmyTauriError> {
     // remove trailing slash if exists
     let replay_path = replay_path.trim_end_matches('/').to_string();
-    let ipc_path = format!("{}/ipcs/", replay_path);
-    let file_cache_path = format!("{}/caches/", replay_path);
+    let ipc_path = format!("{}/{}/", replay_path, IPC_DIR);
+    let file_cache_path = format!("{}/{}/", replay_path, CACHES_DIR);
     log::info!("Getting snapshot metadata from: {}", ipc_path);
     // Add the size of all the files in state.source_dir
     let mut ipc_dir_size = 0;

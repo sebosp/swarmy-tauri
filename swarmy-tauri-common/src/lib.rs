@@ -15,3 +15,6 @@ pub use dataframe::*;
 pub const DETAILS_IPC: &str = "details.ipc";
 pub const INIT_DATA_IPC: &str = "init_data.ipc";
 pub const UNIT_BORN_IPC: &str = "unit_born.ipc";
+
+pub const IPC_DIR: &str = "ipcs";
+pub const CACHES_DIR: &str = "caches";

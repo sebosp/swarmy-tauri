@@ -39,3 +39,16 @@ pub struct MapStatsQuery {
     /// A player that must have played a game in the map.
     pub player_name: String,
 }
+
+/// The parameters for the swarmy-bevy binary.
+/// TODO: Potentially we should add a "mode" so that:
+/// - One mode shows the map height.
+/// - Another mode shows the expansions
+/// - Another mode shows the minerals, distances between bases.
+/// - Another mode shows the frequency of units per location ? Maybe effective?
+#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct SwarmyBevyMapCacheParams {
+    /// A string that contains the comma separated list of cacheids to search for t3 height map and
+    /// mapinfo
+    pub cache_ids: String,
+}

@@ -1,7 +1,8 @@
-use crate::get_current_app_config;
-use swarmy_tauri_common::*;
 pub mod data;
+use crate::get_current_app_config;
 use data::try_query_map_stats;
+use swarmy_tauri_common::*;
+use tauri_plugin_shell::ShellExt;
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn query_map_stats(
@@ -43,4 +44,57 @@ pub async fn query_map_stats(
         }
     });
     t.join().unwrap()
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn exec_swarmy_bevy_map_caches(
+    app_handle: tauri::AppHandle,
+    cache_ids: String,
+) -> ApiResponse {
+    let app_config = match get_current_app_config(app_handle.clone()).await {
+        Ok(config) => config,
+        Err(e) => {
+            return ApiResponse::new(
+                ResponseMetaBuilder::new(false).duration_ms(0).build(),
+                format!("Error getting current app config: {:?}", e),
+            );
+        }
+    };
+    let file_cache_path = format!("{}/{}/", app_config.replay_path, CACHES_DIR);
+    log::info!(
+        "Trying /home/seb/git/swarmy-bevy/target/release/swarmy-bevy {} {}",
+        &file_cache_path,
+        &cache_ids
+    );
+    let init_time = std::time::Instant::now();
+    let t = std::thread::spawn(async move || {
+        let shell = app_handle.shell();
+        shell
+            .command("/home/seb/git/swarmy-bevy/target/release/swarmy-bevy")
+            .args([
+                "--snapshot-path",
+                &file_cache_path,
+                "--cache-handle-ids",
+                &cache_ids,
+            ])
+            .output()
+            .await
+            .unwrap()
+    });
+    let output = t.join().unwrap().await;
+    ApiResponse::new(
+        ResponseMetaBuilder::new(output.status.success())
+            .duration_ms(init_time.elapsed().as_millis() as u64)
+            .build(),
+        match output.status.success() {
+            true => "Succesfully called swarmy-bevy".to_string(),
+            false => match String::from_utf8(output.stderr.clone()) {
+                Ok(utf8_str) => format!("Error executing swarmy bevy: {}", utf8_str),
+                Err(_) => format!(
+                    "Error executing swarmy bevy (also non-utf8): {:?}",
+                    output.stderr
+                ),
+            },
+        },
+    )
 }

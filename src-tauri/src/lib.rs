@@ -17,8 +17,8 @@ pub mod majordomo;
 use std::process;
 use std::thread;
 
-use tauri::async_runtime::spawn;
 use tauri::AppHandle;
+use tauri::async_runtime::spawn;
 use tokio::sync::mpsc;
 
 use crate::majordomo::AsyncTask;
@@ -71,6 +71,7 @@ pub fn run() {
             get_snapshot_metadata,
             query_map_stats,
             download_replay_caches,
+            exec_swarmy_bevy_map_caches,
         ])
         .plugin(tauri_plugin_store::Builder::default().build())
         .run(tauri::generate_context!())
