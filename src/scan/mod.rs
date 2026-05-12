@@ -1,5 +1,6 @@
 //! SC2Replay Directory Scan and Export to Arrow IPC Module
 
+pub mod actions;
 pub mod arrow_ipc_stats;
 pub mod mpq_file_scan;
 pub mod view;
@@ -59,18 +60,18 @@ impl ActivityStage {
 
     pub fn top_container_class(&self) -> &'static str {
         match self {
-            Self::None => "border-l-4 mt-1 p-2 border-gray-500 bg-gray-500/10",
-            Self::DirectoryEntered => "border-l-4 mt-1 p-2 border-blue-500 bg-blue-500/10",
+            Self::None => "border-l-4 mt-0 p-1 border-gray-500 bg-gray-500/10",
+            Self::DirectoryEntered => "border-l-4 mt-0 p-1 border-blue-500 bg-blue-500/10",
             Self::ScanFailure
             | ActivityStage::OptimizeFailure
             | ActivityStage::DownloadingCachesFailure => {
-                "border-l-4 mt-1 p-2 border-red-500 bg-red-500/10"
+                "border-l-4 mt-0 p-1 border-red-500 bg-red-500/10"
             }
             Self::ScanInit | ActivityStage::OptimizeInit | ActivityStage::DownloadingCachesInit => {
-                "border-l-4 mt-1 p-2 border-teal-500 bg-teal-500/10"
+                "border-l-4 mt-0 p-1 border-teal-500 bg-teal-500/10"
             }
             Self::ScanDone | ActivityStage::OptimizeDone | ActivityStage::DownloadingCachesDone => {
-                "border-l-4 mt-1 p-2 border-green-500 bg-green-500/10"
+                "border-l-4 mt-0 p-1 border-green-500 bg-green-500/10"
             }
         }
     }
@@ -112,7 +113,7 @@ impl ActivityStage {
             Self::OptimizeDone => "Data Optimization for analysis completed, proceed to Download Caches.".to_string(),
             Self::DownloadingCachesInit => "Downloading Caches.".to_string(),
             Self::DownloadingCachesFailure=> "Download Cache has finished with failure, please check the directory and permissions or the logs.".to_string(),
-            Self::DownloadingCachesDone => "Downloading Caches complete.".to_string()
+            Self::DownloadingCachesDone => "Snapshot setup is complete.".to_string()
             }
     }
 

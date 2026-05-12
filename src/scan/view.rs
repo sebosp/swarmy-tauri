@@ -1,172 +1,18 @@
 //! Swarmy Tauri UI - Scan View
 
+use super::actions::*;
 use super::arrow_ipc_stats::ArrowIpcStats;
 use super::mpq_file_scan::ReplayScanTable;
-use crate::scan::*;
+use super::*;
 use crate::*;
 use leptos::ev::MouseEvent;
 use leptos::leptos_dom::logging::console_log;
 use leptos::prelude::*;
-use leptos::task::spawn_local;
-use phosphor_leptos::{Icon, IconWeight, BARCODE, DATABASE, HOURGLASS, SHIPPING_CONTAINER};
+use phosphor_leptos::{Icon, IconWeight, DATABASE, SHIPPING_CONTAINER};
 use reactive_graph::traits::Write;
-use reactive_stores::{Patch, Store};
+use reactive_stores::Store;
 use s2protocol::SC2ReplaysDirStats;
 use swarmy_tauri_common::*;
-
-/// Step 1, a user selects a directory to scan.
-/// This may contain multiple subdirectories.
-/// TODO: We could store a swarmy-stats.json in the root directory to prevent re-scanning.
-/// This would also allow this step to be marked as completion when the UI is loaded.
-pub fn trigger_basic_scan_replay_path(
-    ev: MouseEvent,
-    app_settings: ReadSignal<AppSettings>,
-    set_backend_response: WriteSignal<ApiResponse>,
-    data: Store<SC2ReplaysDirStatsTable>,
-    set_activity_stage: WriteSignal<ActivityStage>,
-) {
-    ev.prevent_default();
-    *set_activity_stage.write() = ActivityStage::ScanInit;
-    *set_backend_response.write() = ApiResponse::new_incomplete();
-    if app_settings.get().replay_path.is_empty() {
-        console_log("Replay path is empty.");
-        return;
-    }
-
-    let app_settings_cp = app_settings.get();
-
-    spawn_local(async move {
-        let args = serde_wasm_bindgen::to_value(&app_settings_cp).unwrap();
-        // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-        match serde_wasm_bindgen::from_value::<SC2ReplaysDirStats>(
-            invoke("basic_scan_replay_path", args).await,
-        ) {
-            Ok(stats) => {
-                let mut stats_table: SC2ReplaysDirStatsTable = stats.into();
-                console_log(&format!("New data = {:?}", stats_table));
-                data.top_10_players().write().retain(|_| false);
-                data.top_10_players()
-                    .write()
-                    .append(&mut stats_table.top_10_players);
-                data.top_10_maps().write().retain(|_| false);
-                data.top_10_maps()
-                    .write()
-                    .append(&mut stats_table.top_10_maps);
-                data.total_files().patch(stats_table.total_files);
-                data.total_supported_replays()
-                    .patch(stats_table.total_supported_replays);
-                data.ability_supported_replays()
-                    .patch(stats_table.ability_supported_replays);
-            }
-            Err(e) => {
-                console_log(&format!("Error invoking basic_scan_replay_path: {:?}", e));
-            }
-        }
-        *set_activity_stage.write() = ActivityStage::ScanDone;
-    });
-}
-
-/// Step 2: Once a directory has gone through the basic scan, the process of generating the
-/// ArrowIpc "snapshot" can be done.
-/// TODO: When an `ipc` directory already exists, we could mark this step as done, but provide the
-/// user the possibility to re-run the optimization.
-pub fn trigger_optimize_replay_path(
-    app_settings: ReadSignal<AppSettings>,
-    set_backend_response: WriteSignal<ApiResponse>,
-    set_activity_stage: WriteSignal<ActivityStage>,
-) {
-    *set_activity_stage.write() = ActivityStage::OptimizeInit;
-    // Reset backend response status.
-    *set_backend_response.write() = ApiResponse::new_incomplete();
-
-    if app_settings.get().replay_path.is_empty() {
-        console_log("Replay path is empty.");
-        return;
-    }
-
-    let app_settings_cp = app_settings.get();
-    spawn_local(async move {
-        let args = serde_wasm_bindgen::to_value(&app_settings_cp).unwrap();
-        console_log(&format!(
-            "Invoking optimize_replay_path with args: {:?}",
-            args
-        ));
-        // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-        let response = invoke("optimize_replay_path", args).await;
-        console_log(&format!("optimize_replay_path response: {:?}", response));
-        match serde_wasm_bindgen::from_value::<ApiResponse>(response) {
-            Ok(res) => {
-                if res.meta.success {
-                    console_log("Optimize replay path succeeded.");
-                } else {
-                    console_log(&format!("Optimize replay path failed: {:?}", res.message));
-                }
-                set_backend_response.set(res);
-            }
-            Err(e) => {
-                console_log(&format!("Error invoking optimize_replay_path: {:?}", e));
-                set_backend_response.set(ApiResponse {
-                    meta: ResponseMeta {
-                        success: false,
-                        duration_ms: 0,
-                        is_complete: true,
-                    },
-                    message: format!("Error invoking optimize_replay_path: {:?}", e),
-                });
-            }
-        }
-        *set_activity_stage.write() = ActivityStage::OptimizeDone;
-    });
-}
-
-pub fn trigger_download_replay_caches(
-    app_settings: ReadSignal<AppSettings>,
-    set_backend_response: WriteSignal<ApiResponse>,
-    set_activity_stage: WriteSignal<ActivityStage>,
-) {
-    *set_activity_stage.write() = ActivityStage::DownloadingCachesInit;
-    // Reset backend response status.
-    *set_backend_response.write() = ApiResponse::new_incomplete();
-
-    if app_settings.get().replay_path.is_empty() {
-        console_log("Replay path is empty.");
-        return;
-    }
-
-    let app_settings_cp = app_settings.get();
-    spawn_local(async move {
-        let args = serde_wasm_bindgen::to_value(&app_settings_cp).unwrap();
-        console_log(&format!(
-            "Invoking download_replay_caches with args: {:?}",
-            args
-        ));
-        // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-        let response = invoke("download_replay_caches", args).await;
-        console_log(&format!("download_replay_caches response: {:?}", response));
-        match serde_wasm_bindgen::from_value::<ApiResponse>(response) {
-            Ok(res) => {
-                if res.meta.success {
-                    console_log("Download replay caches succeeded.");
-                } else {
-                    console_log(&format!("Download replay caches failed: {:?}", res.message));
-                }
-                set_backend_response.set(res);
-            }
-            Err(e) => {
-                console_log(&format!("Error invoking download_replay_caches: {:?}", e));
-                set_backend_response.set(ApiResponse {
-                    meta: ResponseMeta {
-                        success: false,
-                        duration_ms: 0,
-                        is_complete: true,
-                    },
-                    message: format!("Error invoking download_replay_caches: {:?}", e),
-                });
-            }
-        }
-        *set_activity_stage.write() = ActivityStage::DownloadingCachesDone;
-    });
-}
 
 #[component]
 pub fn ScanDirectory() -> impl IntoView {
@@ -215,9 +61,9 @@ pub fn ScanDirectory() -> impl IntoView {
                 <button
                     class=move || {
                         if activity_stage.get() > ActivityStage::None {
-                            "btn btn-primary btn-sm"
+                            "btn btn-primary btn-sm b-0"
                         } else {
-                            "btn btn-disabled btn-sm disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:outline-gray-200"
+                            "btn btn-disabled btn-sm b-0 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:outline-gray-200"
                         }
                     }
                     on:click=move |ev: MouseEvent| trigger_basic_scan_replay_path(
@@ -227,17 +73,11 @@ pub fn ScanDirectory() -> impl IntoView {
                         dir_stats_data,
                         set_activity_stage,
                     )
-                    disabled=move || app_settings.get().replay_path.is_empty()
+                    disabled=move || { app_settings.get().replay_path.is_empty() }
                     title="Initial scan for StarCraft II replays"
                 >
                     <Icon
-                        icon=(move || {
-                            if app_settings.get().replay_path.is_empty() {
-                                BARCODE
-                            } else {
-                                HOURGLASS
-                            }
-                        })()
+                        icon=(move || { activity_stage.get().icon_data() })()
                         weight=IconWeight::Light
                         prop:class="stroke-current"
                     />
@@ -256,17 +96,15 @@ pub fn ScanDirectory() -> impl IntoView {
                         set_backend_response,
                         set_activity_stage,
                     )
-                    disabled=move || { activity_stage.get() != ActivityStage::ScanDone }
+                    disabled=move || {
+                        activity_stage.get() == ActivityStage::DirectoryEntered
+                            && activity_stage.get() != ActivityStage::ScanInit
+                            && activity_stage.get() != ActivityStage::OptimizeInit
+                    }
                     title="Optimize the replay generating Arrow files (may take some time)"
                 >
                     <Icon icon=DATABASE weight=IconWeight::Light prop:class="stroke-current" />
-                    {move || {
-                        if activity_stage.get() == ActivityStage::OptimizeInit {
-                            "Optimizing..."
-                        } else {
-                            "Optimize"
-                        }
-                    }}
+                    "Optimize"
                 </button>
                 <button
                     class=move || {
@@ -281,7 +119,10 @@ pub fn ScanDirectory() -> impl IntoView {
                         set_backend_response,
                         set_activity_stage,
                     )
-                    disabled=move || activity_stage.get() != ActivityStage::DownloadingCachesInit
+                    disabled=move || {
+                        activity_stage.get() == ActivityStage::DirectoryEntered
+                            && activity_stage.get() != ActivityStage::OptimizeInit
+                    }
                     title="Downloads the caches from Starcraft II servers that contain map information such as Height Map"
                 >
                     <Icon
@@ -289,32 +130,16 @@ pub fn ScanDirectory() -> impl IntoView {
                         weight=IconWeight::Light
                         prop:class="stroke-current"
                     />
-                    {move || {
-                        if !app_settings.get().replay_path.is_empty() {
-                            "Downloading Caches..."
-                        } else {
-                            "Download Caches"
-                        }
-                    }}
+                    "Download Caches"
                 </button>
             </div>
             <DisplayBackendStatus backend_response />
-            <div class="col-span-10">
-                <Show when=move || { dir_stats_data.total_files().get() == 0 }>
-                    <SnapshotStatusHeader app_settings=app_settings dir_stats_data activity_stage />
-                </Show>
-                <Show when=move || {
-                    dir_stats_data.total_files().get() > 0
-                        && app_settings.get().snapshot_stats.ipc_dir_size == 0
-                }>
-                    <SnapshotStatusHeader app_settings=app_settings dir_stats_data activity_stage />
+            <div class="col-span-10 m-0 p-0">
+                <SnapshotStatusHeader app_settings=app_settings dir_stats_data activity_stage />
+                <Show when=move || { activity_stage.get() == ActivityStage::ScanDone }>
                     <ReplayScanTable dir_stats_data />
                 </Show>
-                <Show when=move || {
-                    activity_stage.get() == ActivityStage::OptimizeDone
-                        && app_settings.get().snapshot_stats.ipc_dir_size > 0
-                }>
-                    <SnapshotStatusHeader app_settings=app_settings dir_stats_data activity_stage />
+                <Show when=move || { activity_stage.get() > ActivityStage::OptimizeDone }>
                     <ArrowIpcStats snapshot_stats=snapshot_stats />
                 </Show>
             </div>
@@ -337,7 +162,7 @@ pub fn SnapshotStatusHeader(
         has_caches_downloaded()
     ));
     view! {
-        <div class=move || { activity_stage.get().top_container_class().join(" ") }>
+        <div class=move || { activity_stage.get().top_container_class() }>
             <div class="flex">
                 <div class=move || { activity_stage.get().alert_container_class() }>
                     <Icon
